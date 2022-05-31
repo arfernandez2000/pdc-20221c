@@ -15,7 +15,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port);
 int main(int argc, char* argv[]){
     
 
-    char* ip = "8.8.8.8";
+    char* ip = "127.0.0.1";
     uint16_t port = 8080;
 
     struct in_addr ip_addr;
@@ -47,7 +47,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
-        printf("falla en la creacion del socket \n");
+        printf("Error in socket creation \n");
         return -1;
     }
     
@@ -80,7 +80,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
     
     sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_SCTP);
     if (sock == -1) {
-        printf("falla en la creacion del socket \n");
+        printf("Error in socket creation \n");
         return -1;
     }
     

@@ -1,0 +1,9 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "*.vue": "vue",
+        "*.y": "yaml",
+        "selector.h": "c",
+        "netutils.h": "c"
+    }
+}

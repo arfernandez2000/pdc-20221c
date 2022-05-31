@@ -11,8 +11,7 @@
 #define N(x) (sizeof(x)/sizeof((x)[0]))
 
 extern const char *
-sockaddr_to_human(char *buff, const size_t buffsize,
-                  const struct sockaddr *addr) {
+sockaddr_to_human(char *buff, const size_t buffsize, const struct sockaddr *addr) {
     if(addr == 0) {
         strncpy(buff, "null", buffsize);
         return buff;
