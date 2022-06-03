@@ -11,7 +11,8 @@
 #include <arpa/inet.h>
 
 #include "netutils/netutils.h"
-#include "selector.h"
+#include "selector/selector.h"
+#include "socks5/socks5.h"
 
 #define DEFAULT_TIMEOUT 5
 #define SELECTOR_COUNT 1024
@@ -21,8 +22,8 @@ typedef struct server_handler {
     struct in_addr ipv4addr;
     struct in6_addr ipv6addr;
     in_port_t port;
-    fd_handler ipv6Handler;
-    fd_handler ipv4Handler;
+    fd_handler ipv6_handler;
+    fd_handler ipv4_handler;
     fd_handler adminHandler;
     int ipv4Fd;
     int ipv6Fd;
@@ -38,6 +39,8 @@ static fd_selector init_selector();
 
 int main(const int argc, const char **argv) {
 
+    static bool done = false;
+
     serverHandler.port = htons(8080);
 
     close(STDIN_FILENO);
@@ -45,6 +48,7 @@ int main(const int argc, const char **argv) {
     selector_fd_set_nio(STDOUT_FILENO);
     selector_fd_set_nio(STDERR_FILENO);
     
+    selector_status   ss      = SELECTOR_SUCCESS;
     fd_selector selector = init_selector();
 
     if(selector == NULL)
@@ -53,7 +57,12 @@ int main(const int argc, const char **argv) {
 
     listen_interfaces(selector);
 
-    while(1){};
+    for(;!done;) {
+        ss = selector_select(selector);
+        if(ss != SELECTOR_SUCCESS) {
+            perror("Fallo en el while 1");
+        }
+    }
     
 }
 
@@ -89,7 +98,11 @@ void listen_interfaces(fd_selector selector) {
 }
 
 static int generate_socket_ipv4(fd_selector selector){
-    memset(&serverHandler.ipv4Handler, '\0', sizeof(serverHandler.ipv4Handler));
+    memset(&serverHandler.ipv4_handler, '\0', sizeof(serverHandler.ipv4_handler));
+
+    // LLamo a la funcioan que socks5 a ejecutar
+    serverHandler.ipv4_handler.handle_read = new_connection_ipv4;
+
     struct sockaddr_in sockaddr4 = {
         .sin_addr = serverHandler.ipv4addr,
         .sin_family = AF_INET,
@@ -100,6 +113,12 @@ static int generate_socket_ipv4(fd_selector selector){
     if(ipv4Fd == -1) {
         return -1;
     }
+
+    if(selector_register(selector, ipv4Fd, &serverHandler.ipv4_handler, OP_READ, NULL)){
+        perror("Failed file descriptor registration for ipv4");
+        return -1;
+    }
+
     serverHandler.ipv4Fd = ipv4Fd; 
     return 0;
 }
@@ -136,6 +155,6 @@ static int generate_socket(struct sockaddr * addr, socklen_t addr_len){
 
 // static int generate_socket_ipv6(fd_selector selector){
 //  
-//      memset(&server_handler.ipv4Handler, '\0', sizeof(server_handler.ipv4Handler));
+//      memset(&server_handler.ipv4_handler, '\0', sizeof(server_handler.ipv4_handler));
 // 
 // }

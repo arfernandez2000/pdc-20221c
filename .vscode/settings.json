@@ -4,6 +4,7 @@
         "*.vue": "vue",
         "*.y": "yaml",
         "selector.h": "c",
-        "netutils.h": "c"
+        "netutils.h": "c",
+        "args.h": "c"
     }
 }
