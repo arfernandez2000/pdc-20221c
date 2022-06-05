@@ -18,7 +18,7 @@ struct doh {
     char           *query;
 };
 
-struct socks5args {
+typedef struct socks5args {
     char           *socks_addr;
     unsigned short  socks_port;
 
@@ -29,7 +29,7 @@ struct socks5args {
 
     struct doh      doh;
     struct users    users[MAX_USERS];
-};
+} socks5args;
 
 /**
  * Interpreta la linea de comandos (argc, argv) llenando

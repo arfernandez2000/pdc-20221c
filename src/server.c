@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "args/args.h"
 #include "netutils/netutils.h"
 #include "selector/selector.h"
 #include "socks5/socks5.h"
@@ -30,6 +31,8 @@ typedef struct server_handler {
     int adminFd;
 } server_handler;
 
+static socks5args args;
+
 static server_handler serverHandler;
 static int generate_socket(struct sockaddr * addr, socklen_t addr_len);
 static int generate_socket_ipv4(fd_selector selector);
@@ -37,9 +40,11 @@ void listen_interfaces(fd_selector selector);
 static fd_selector init_selector();
 
 
-int main(const int argc, const char **argv) {
+int main(const int argc, char **argv) {
 
     static bool done = false;
+    
+    parse_args(argc, argv, &args);
 
     serverHandler.port = htons(8080);
 
@@ -54,6 +59,7 @@ int main(const int argc, const char **argv) {
     if(selector == NULL)
         return -1;
     
+    initialize_socks5(&args, selector);
 
     listen_interfaces(selector);
 

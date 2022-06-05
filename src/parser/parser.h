@@ -17,7 +17,7 @@
  * Evento que retorna el parser.
  * Cada tipo de evento tendrá sus reglas en relación a data.
  */
-struct parser_event {
+typedef struct parser_event {
     /** tipo de evento */
     unsigned type;
     /** caracteres asociados al evento */
@@ -27,7 +27,7 @@ struct parser_event {
 
     /** lista de eventos: si es diferente de null ocurrieron varios eventos */
     struct parser_event *next;
-};
+} parser_event;
 
 /** describe una transición entre estados  */
 struct parser_state_transition {

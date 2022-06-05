@@ -21,7 +21,7 @@
  * de selector.c.
  */
 
-struct state_machine {
+typedef struct state_machine {
     /** declaración de cual es el estado inicial */
     unsigned                      initial;
     /**
@@ -32,14 +32,14 @@ struct state_machine {
     unsigned                      max_state;
     /** estado actual */
     const struct state_definition *current;
-};
+} state_machine;
 
 struct selector_key *key;
 
 /**
  * definición de un estado de la máquina de estados
  */
-struct state_definition {
+typedef struct state_definition {
     /**
      * identificador del estado: típicamente viene de un enum que arranca
      * desde 0 y no es esparso.
@@ -56,7 +56,7 @@ struct state_definition {
     unsigned (*on_write_ready)(struct selector_key *key);
     /** ejecutado cuando hay una resolución de nombres lista */
     unsigned (*on_block_ready)(struct selector_key *key);
-};
+} state_definition;
 
 
 /** inicializa el la máquina */
