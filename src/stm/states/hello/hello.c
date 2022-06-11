@@ -1,4 +1,5 @@
 #include "hello.h"
+#include <stdio.h>
 
 
 static int hello_arrival(selector_key* event) {
@@ -6,6 +7,9 @@ static int hello_arrival(selector_key* event) {
     session -> client.authentication = NO_ACCEPTABLE_METHODS;
     
     // TODO inicializar el parser
+    hello_parser h_parser;
+    hello_parser_init(h_parser);
+
 
     selector_set_interest(event->s, session->client.fd, OP_READ);
 }
