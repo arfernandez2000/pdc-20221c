@@ -101,3 +101,7 @@ stm_state(struct state_machine *stm) {
     }
     return ret;
 }
+
+void stm_map(){
+
+}

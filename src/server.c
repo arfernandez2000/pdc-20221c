@@ -52,8 +52,8 @@ int main(const int argc, char **argv) {
 
     selector_fd_set_nio(STDOUT_FILENO);
     selector_fd_set_nio(STDERR_FILENO);
-    
-    selector_status   ss      = SELECTOR_SUCCESS;
+
+    selector_status ss = SELECTOR_SUCCESS;
     fd_selector selector = init_selector();
 
     if(selector == NULL)

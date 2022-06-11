@@ -111,7 +111,7 @@ typedef enum {
 /**
  * Argumento de todas las funciones callback del handler
  */
-typedef struct selector_key {
+typedef struct  {
     /** el selector que dispara el evento */
     fd_selector s;
     /** el file descriptor en cuestión */

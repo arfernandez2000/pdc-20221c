@@ -19,7 +19,9 @@ void initialize_socks5(socks5args args,fd_selector selector) {
     server_handler.handle_write = server_write;
     server_handler.handle_close = server_close;
     server_handler.handle_block = NULL;
+
     // Aca habria que inicializar la maquina de estados.
+    stm_map();
 }
 
 
@@ -75,6 +77,7 @@ static Session* initialize_session() {
     buffer_init(&session->input, inputBufferSize, inputBuffer);
     buffer_init(&session->output, outputBufferSize, outputBuffer);
 
+    stm_create(&session->s_machine);
     // initialize_state_machine(&session->s_machine);
     
     
