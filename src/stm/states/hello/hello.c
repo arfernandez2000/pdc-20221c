@@ -1,5 +1,4 @@
 #include "hello.h"
-#include <stdio.h>
 
 
 static int hello_arrival(selector_key* event) {
