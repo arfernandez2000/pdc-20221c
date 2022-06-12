@@ -64,12 +64,14 @@ int main(const int argc, char **argv) {
     listen_interfaces(selector);
 
     for(;!done;) {
+        fprintf(stdout,"Mi file descriptor ANTES es:");
         ss = selector_select(selector);
+        fprintf(stdout,"Mi file descriptor DESPUES es: ");
+        //ACA SE ROMPE EN EL SS
         if(ss != SELECTOR_SUCCESS) {
             perror("Fallo en el while 1");
         }
     }
-    
 }
 
 static fd_selector init_selector(){

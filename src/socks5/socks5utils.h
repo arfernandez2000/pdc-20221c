@@ -21,7 +21,7 @@ typedef enum socket_state{
     CLOSED,
 }socket_state;
 
-typedef enum session_state{
+enum session_state{
     HELLO_READ = 0,
     HELLO_WRITE,
     AUTH_READ,
@@ -33,7 +33,7 @@ typedef enum session_state{
     COPY,
     ERROR,
     DONE,
-} session_state;
+};
 
 
 typedef struct Connection {

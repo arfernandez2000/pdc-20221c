@@ -450,7 +450,6 @@ handle_iteration(fd_selector s) {
     selector_key key = {
         .s = s,
     };
-
     for (int i = 0; i <= n; i++) {
         struct item *item = s->fds + i;
         if(ITEM_USED(item)) {
@@ -461,7 +460,10 @@ handle_iteration(fd_selector s) {
                     if(0 == item->handler->handle_read) {
                         assert(("OP_READ arrived but no handler. bug!" == 0));
                     } else {
+                        //ACA SE ROMPE
+                        fprintf(stdout,"ANTES DDE GENERAR EL SOCKET %d", s->fds->fd);
                         item->handler->handle_read(&key);
+                        fprintf(stdout,"Mi file descriptor es DDDDD:");
                     }
                 }
             }

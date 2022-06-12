@@ -42,6 +42,7 @@ void new_connection_ipv4(selector_key *event) {
     fprintf(stdout,"Mi file descriptor es: %d\n", fd);
 
     Session * session = initialize_session();  
+    fprintf(stdout,"DESPUES DEL INITIALIZE");
     if (session == NULL) {
         perror("somos unos perrors");
         close(fd);
@@ -59,6 +60,7 @@ void new_connection_ipv4(selector_key *event) {
 }
 
 static Session* initialize_session() {
+    fprintf(stdout,"initialize_session");
     Session* session = calloc(1, sizeof(*session));
     if(session == NULL){
         return NULL;
@@ -79,8 +81,8 @@ static Session* initialize_session() {
 
     buffer_init(&session->input, inputBufferSize, inputBuffer);
     buffer_init(&session->output, outputBufferSize, outputBuffer);
-
     stm_create(session->s_machine);
+    fprintf(stdout,"DESPUES DEL CREATE STM");
     // initialize_state_machine(&session->s_machine);
     
     

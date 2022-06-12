@@ -29,11 +29,11 @@ typedef struct state_machine {
     /**
      * declaracion de los estados: deben estar ordenados segun .[].state.
      */
-    struct state_definition *states;
+    const struct state_definition *states;
     /** cantidad de estados */
     unsigned                      max_state;
     /** estado actual */
-    struct state_definition *current;
+    const struct state_definition *current;
 } state_machine;
 
 selector_key *key;

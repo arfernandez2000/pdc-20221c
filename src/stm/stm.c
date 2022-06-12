@@ -11,7 +11,9 @@ void
 stm_init(struct state_machine *stm) {
     // verificamos que los estados son correlativos, y que están bien asignados.
     for(unsigned i = 0 ; i <= stm->max_state; i++) {
+        fprintf(stdout,"A PUNTO DEL ABORT %d - i %d", stm->states[i].state, i);
         if(i != stm->states[i].state) {
+            fprintf(stdout,"A PUNTO DEL ABORT %d", stm->states[i].state);
             abort();
         }
     }
