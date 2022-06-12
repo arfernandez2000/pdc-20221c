@@ -39,10 +39,8 @@ void new_connection_ipv4(selector_key *event) {
         fd = accept(event->fd, (struct sockaddr *)&cli_address, &clilen);
     } while (fd < 0 && (errno == EINTR));
 
-    fprintf(stdout,"Mi file descriptor es: %d\n", fd);
 
     Session * session = initialize_session();  
-    fprintf(stdout,"DESPUES DEL INITIALIZE");
     if (session == NULL) {
         perror("somos unos perrors");
         close(fd);
@@ -61,10 +59,11 @@ void new_connection_ipv4(selector_key *event) {
 
 static Session* initialize_session() {
     fprintf(stdout,"initialize_session");
-    Session* session = calloc(1, sizeof(*session));
+    Session* session = malloc(sizeof(*session));
     if(session == NULL){
         return NULL;
     }
+    memset(session, 0x05, sizeof(*session));
 
     uint8_t *inputBuffer = malloc(inputBufferSize*sizeof(*inputBuffer));
     if(inputBuffer == NULL){
@@ -79,9 +78,57 @@ static Session* initialize_session() {
         return NULL;
     }
 
+    // session->s_machine = (state_machine) malloc(sizeof(state_machine));
+    // if(session->s_machine == NULL){
+    //     free(session);
+    //     free(inputBuffer);
+    //     free(outputBuffer);
+    //     return NULL;
+    // }
+    // session->s_machine->states = malloc(sizeof(state_definition));
+    // if(session->s_machine->states == NULL){
+    //     free(session);
+    //     free(inputBuffer);
+    //     free(outputBuffer);
+    //     free(session->s_machine);
+    //     return NULL;
+    // }
+    // session->s_machine->current = malloc(sizeof(state_definition));
+    // if(session->s_machine->current == NULL){
+    //     free(session);
+    //     free(inputBuffer);
+    //     free(outputBuffer);
+    //     free(session->s_machine->states);
+    //     free(session->s_machine)
+    //     return NULL;
+    // }
+    // session->client_information = malloc(sizeof(Client));
+    // if(session->client_information == NULL){
+    //     free(session);
+    //     free(inputBuffer);
+    //     free(outputBuffer);
+    //     free(session->s_machine->states);
+    //     free(session->s_machine->current);
+    //     free(session->s_machine);
+    //     return NULL;
+    // }
+    // session->client = malloc(sizeof(Connection));
+    // if(session->client == NULL){
+    //     free(session);
+    //     free(inputBuffer);
+    //     free(outputBuffer);
+    //     free(session->s_machine->states);
+    //     free(session->s_machine->current);
+    //     free(session->s_machine);
+    //     free(session->client_information);
+    //     return NULL;
+    // }
+
+    fprintf(stdout,"Si llegue aca es porque funcionan los mallocs");
+
     buffer_init(&session->input, inputBufferSize, inputBuffer);
     buffer_init(&session->output, outputBufferSize, outputBuffer);
-    stm_create(session->s_machine);
+    stm_create(&(session->s_machine));
     fprintf(stdout,"DESPUES DEL CREATE STM");
     // initialize_state_machine(&session->s_machine);
     
@@ -98,26 +145,12 @@ static void client_write(selector_key * event){
 
     fprintf(stdout,"Estoy en client_write!\n");
     
-    Session * session = (Session *) event->data;
-    session->lastModified = time(NULL);
+    state_machine * stm = &((Session *) event->data)->s_machine;
+    const enum session_state st = stm_handler_write(stm, event);
 
-    buffer * buffer_write = &session->output;
-
-    if(!buffer_can_read(buffer_write)){
-        return;
-    }
-    
-    ssize_t write_bytes;
-    size_t bytes;
-    uint8_t * read = buffer_read_ptr(buffer_write, &bytes);
-    
-    if(write_bytes = send(event->fd, read, bytes, MSG_NOSIGNAL), write_bytes > 0){
-        buffer_read_adv(buffer_write, write_bytes);
-    }
-    else{
-        if(errno!=EINTR){
-            close_session(event);
-        }
+    if (ERROR == st || DONE == st)
+    {
+        close_session(event);
     }
     
 }
@@ -125,25 +158,12 @@ static void client_write(selector_key * event){
 static void client_read(selector_key  *event)
 {
     fprintf(stdout,"Estoy en client_read!\n");
-    Session * session = (Session *) event->data;
-    session->lastModified = time(NULL);
-    buffer * buffer_read = &session->output;
+    state_machine * stm = &((Session *) event->data)->s_machine;
+    const enum session_state st = stm_handler_read(stm, event);
 
-    if(!buffer_can_read(buffer_read)){
-        return;
-    }
-
-    ssize_t readBytes;
-    size_t nbytes;
-    uint8_t * writePtr = buffer_write_ptr(buffer_read, &nbytes);
-
-    if(readBytes = recv(event->fd, writePtr, nbytes, MSG_NOSIGNAL), readBytes >= 0) {
-        buffer_write_adv(buffer_read, readBytes);
-    }
-    else {
-        if(errno != EINTR) {
-            close_session(event);
-        }
+    if (ERROR == st || DONE == st)
+    {
+        close_session(event);
     }
 }
 
@@ -161,6 +181,7 @@ static void close_session(selector_key * event){
     fprintf(stdout, "Estoy en el close_session");
     Session * session = (Session *) event->data;
     selector_unregister_fd(event->s, session->client.fd);
+    close(session->client.fd);
 
 }
 

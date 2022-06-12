@@ -17,10 +17,11 @@ void stm_map() {
     //session_state_def[DONE] = done_state_def();
 }
 
-void stm_create(state_machine s_machine) {
-    s_machine.initial = HELLO_READ;
-    s_machine.max_state = HELLO_WRITE;
-    s_machine.states = session_state_def;
-    //s_machine.current->state = HELLO_READ;
-    stm_init(&s_machine);
+void stm_create(state_machine* s_machine) {
+    s_machine->initial = HELLO_READ;
+    s_machine->max_state = HELLO_WRITE;
+    s_machine->states = session_state_def;
+    // s_machine.current->state = HELLO_READ;
+    
+    stm_init(s_machine);
 }

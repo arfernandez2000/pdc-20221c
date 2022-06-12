@@ -8,12 +8,10 @@
 #define N(x) (sizeof(x)/sizeof((x)[0]))
 
 void
-stm_init(struct state_machine *stm) {
+stm_init(state_machine *stm) {
     // verificamos que los estados son correlativos, y que están bien asignados.
     for(unsigned i = 0 ; i <= stm->max_state; i++) {
-        fprintf(stdout,"A PUNTO DEL ABORT %d - i %d", stm->states[i].state, i);
         if(i != stm->states[i].state) {
-            fprintf(stdout,"A PUNTO DEL ABORT %d", stm->states[i].state);
             abort();
         }
     }
@@ -26,17 +24,19 @@ stm_init(struct state_machine *stm) {
 }
 
 inline static void
-handle_first(struct state_machine *stm, selector_key *key) {
+handle_first(state_machine *stm, selector_key *key) {
     if(stm->current == NULL) {
         stm->current = stm->states + stm->initial;
         if(NULL != stm->current->on_arrival) {
+            fprintf(stdout,"Estoy en el if de handle_first!\n");
             stm->current->on_arrival(stm->current->state, key);
         }
     }
+    
 }
 
 inline static
-void jump(struct state_machine *stm, unsigned next, selector_key *key) {
+void jump(state_machine *stm, unsigned next, selector_key *key) {
     if(next > stm->max_state) {
         abort();
     }
@@ -53,7 +53,8 @@ void jump(struct state_machine *stm, unsigned next, selector_key *key) {
 }
 
 unsigned
-stm_handler_read(struct state_machine *stm, selector_key *key) {
+stm_handler_read(state_machine *stm, selector_key *key) {
+    fprintf(stdout,"Estoy en stm_handler_read!\n");
     handle_first(stm, key);
     if(stm->current->on_read_ready == 0) {
         abort();
@@ -65,7 +66,7 @@ stm_handler_read(struct state_machine *stm, selector_key *key) {
 }
 
 unsigned
-stm_handler_write(struct state_machine *stm, selector_key *key) {
+stm_handler_write(state_machine *stm, selector_key *key) {
     handle_first(stm, key);
     if(stm->current->on_write_ready == 0) {
         abort();
@@ -77,7 +78,7 @@ stm_handler_write(struct state_machine *stm, selector_key *key) {
 }
 
 unsigned
-stm_handler_block(struct state_machine *stm, selector_key *key) {
+stm_handler_block(state_machine *stm, selector_key *key) {
     handle_first(stm, key);
     if(stm->current->on_block_ready == 0) {
         abort();
@@ -89,14 +90,14 @@ stm_handler_block(struct state_machine *stm, selector_key *key) {
 }
 
 void
-stm_handler_close(struct state_machine *stm, selector_key *key) {
+stm_handler_close(state_machine *stm, selector_key *key) {
     if(stm->current != NULL && stm->current->on_departure != NULL) {
         stm->current->on_departure(stm->current->state, key);
     }
 }
 
 unsigned
-stm_state(struct state_machine *stm) {
+stm_state(state_machine *stm) {
     unsigned ret = stm->initial;
     if(stm->current != NULL) {
         ret= stm->current->state;

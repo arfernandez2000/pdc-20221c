@@ -461,9 +461,9 @@ handle_iteration(fd_selector s) {
                         assert(("OP_READ arrived but no handler. bug!" == 0));
                     } else {
                         //ACA SE ROMPE
-                        fprintf(stdout,"ANTES DDE GENERAR EL SOCKET %d", s->fds->fd);
+                        fprintf(stdout,"ANTES DE GENERAR EL SOCKET %d\n", s->fds->fd);
                         item->handler->handle_read(&key);
-                        fprintf(stdout,"Mi file descriptor es DDDDD:");
+                        fprintf(stdout,"Despues de general el socket\n\n");
                     }
                 }
             }

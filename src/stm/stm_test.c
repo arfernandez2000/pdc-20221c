@@ -71,7 +71,7 @@ static const struct state_definition statbl[] = {
 //static bool init = false;
 
 START_TEST (test_buffer_misc) {
-    struct state_machine stm = {
+    state_machine stm = {
         .initial   = A,
         .max_state = C,
         .states    = statbl,

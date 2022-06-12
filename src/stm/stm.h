@@ -63,26 +63,26 @@ typedef struct state_definition {
 
 /** inicializa el la máquina */
 void
-stm_init(struct state_machine *stm);
+stm_init(state_machine *stm);
 
 /** obtiene el identificador del estado actual */
 unsigned
-stm_state        (struct state_machine *stm);
+stm_state        (state_machine *stm);
 
 /** indica que ocurrió el evento read. retorna nuevo id de nuevo estado. */
 unsigned
-stm_handler_read(struct state_machine *stm, selector_key *key);
+stm_handler_read(state_machine *stm, selector_key *key);
 
 /** indica que ocurrió el evento write. retorna nuevo id de nuevo estado. */
 unsigned
-stm_handler_write(struct state_machine *stm, selector_key *key);
+stm_handler_write(state_machine *stm, selector_key *key);
 
 /** indica que ocurrió el evento block. retorna nuevo id de nuevo estado. */
 unsigned
-stm_handler_block(struct state_machine *stm, selector_key *key);
+stm_handler_block(state_machine *stm, selector_key *key);
 
 /** indica que ocurrió el evento close. retorna nuevo id de nuevo estado. */
 void
-stm_handler_close(struct state_machine *stm, selector_key *key);
+stm_handler_close(state_machine *stm, selector_key *key);
 
 #endif
