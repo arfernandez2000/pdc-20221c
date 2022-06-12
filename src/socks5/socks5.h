@@ -7,8 +7,6 @@
 #include <time.h>
 
 #include "../selector/selector.h"
-#include "../buffer/buffer.h"
-#include "../args/args.h"
 #include "socks5utils.h"
 
 #ifndef SOCKS5_H

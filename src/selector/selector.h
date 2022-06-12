@@ -3,6 +3,7 @@
 
 #include <sys/time.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 /**
  * selector.c - un muliplexor de entrada salida
@@ -124,15 +125,15 @@ typedef struct  {
  * Manejador de los diferentes eventos..
  */
 typedef struct fd_handler {
-  void (*handle_read)      (struct selector_key *key);
-  void (*handle_write)     (struct selector_key *key);
-  void (*handle_block)     (struct selector_key *key);
+  void (*handle_read)      (selector_key *key);
+  void (*handle_write)     (selector_key *key);
+  void (*handle_block)     (selector_key *key);
 
   /**
    * llamado cuando se se desregistra el fd
    * Seguramente deba liberar los recusos alocados en data.
    */
-  void (*handle_close)     (struct selector_key *key);
+  void (*handle_close)     (selector_key *key);
 
 } fd_handler;
 
@@ -167,7 +168,7 @@ selector_set_interest(fd_selector s, int fd, fd_interest i);
 
 /** permite cambiar los intereses para un file descriptor */
 selector_status
-selector_set_interest_key(struct selector_key *key, fd_interest i);
+selector_set_interest_key(selector_key *key, fd_interest i);
 
 
 /**

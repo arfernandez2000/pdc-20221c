@@ -1,7 +1,18 @@
 #include "../buffer/buffer.h"
 #include "../stm/stm.h"
-#include "../../defs.h"
+#include "../defs.h"
 #include "../user/user_utils.h"
+#include "../stm/states/hello/hello.h"
+#include "../parser/hello_parser.h"
+#include <netinet/in.h>
+
+typedef struct hello_st
+{
+    buffer *read_buff, *write_buff;
+    struct hello_parser parser;
+    uint8_t method;
+} hello_st;
+
 
 typedef enum socket_state{
     INVALID,
@@ -11,23 +22,17 @@ typedef enum socket_state{
 }socket_state;
 
 typedef enum session_state{
-    HELLO = 0;
-    HELLO_ERROR,
-    AUTH_ANNOUNCEMENT,
-    AUTH_REQUEST,
-    AUTH_ERROR,
-    AUTH_SUCCESFUL,
-    REQUEST,
-    REQUEST_ERROR,
-    IP_CONNECT,
-    DNS_QUERY,
-    RESPONSE_DNS,
-    DNS_CONNECT,
-    REQUEST_SUCCESSFUL,
-    FORWARDING,
-    CLOSER,
-    CLOSING,
-    FINISH,
+    HELLO_READ = 0,
+    HELLO_WRITE,
+    AUTH_READ,
+    AUTH_WRITE,
+    REQUEST_READ,
+    REQUEST_RESOLVE,
+    REQUEST_CONNECTING,
+    REQUEST_WRITE,
+    COPY,
+    ERROR,
+    DONE,
 } session_state;
 
 
@@ -37,18 +42,12 @@ typedef struct Connection {
     socket_state state;
 } Connection;
 
-typedef struct hello_header
-{
-    //TODO MIRAR LA ESTRUCTURA DE LAS CHICAS
-    hello_parser parser;
-    sizer_t bytes;
-};
 
 typedef union Socks_header {
-    HelloHeader helloHeader;    
-    AuthRequestHeader authRequestHeader;
-    RequestHeader requestHeader;
-    SpoofingHeader spoofingHeader;
+    hello_st hello;    
+//    auth_st auth;
+//    request_st request;
+//    copy copy;
 } SocksHeaders;
 
 typedef struct Client{
@@ -69,7 +68,7 @@ typedef struct Session {
     Connection client;
 
     Client client_information;
-    Socks_header socks;
+    union Socks_header socks;
 
     time_t lastModified;
 } Session;

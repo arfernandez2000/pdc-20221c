@@ -1,4 +1,4 @@
-#include "../../stm_initalize.h"
-#include "../../../selector/selector.h"
-#include "../../../user/user_utils.h"
-#include "../../../defs.h"
+#include "../../stm.h"
+
+state_definition hello_state_def(void);
+state_definition hello_write_state_def(void);

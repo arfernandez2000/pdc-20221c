@@ -1,4 +1,7 @@
 #include "socks5.h"
+#include "../buffer/buffer.h"
+#include "../args/args.h"
+#include "../stm/stm_initialize.h"
 
 static int inputBufferSize;
 static int outputBufferSize;
@@ -77,7 +80,7 @@ static Session* initialize_session() {
     buffer_init(&session->input, inputBufferSize, inputBuffer);
     buffer_init(&session->output, outputBufferSize, outputBuffer);
 
-    stm_create(&session->s_machine);
+    stm_create(session->s_machine);
     // initialize_state_machine(&session->s_machine);
     
     

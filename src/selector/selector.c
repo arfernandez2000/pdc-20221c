@@ -389,7 +389,7 @@ selector_unregister_fd(fd_selector       s,
     }
 
     if(item->handler->handle_close != NULL) {
-        struct selector_key key = {
+        selector_key key = {
             .s    = s,
             .fd   = item->fd,
             .data = item->data,
@@ -428,7 +428,7 @@ finally:
 }
 
 selector_status
-selector_set_interest_key(struct selector_key *key, fd_interest i) {
+selector_set_interest_key(selector_key *key, fd_interest i) {
     selector_status ret;
 
     if(NULL == key || NULL == key->s || INVALID_FD(key->fd)) {
@@ -447,7 +447,7 @@ selector_set_interest_key(struct selector_key *key, fd_interest i) {
 static void
 handle_iteration(fd_selector s) {
     int n = s->max_fd;
-    struct selector_key key = {
+    selector_key key = {
         .s = s,
     };
 
@@ -480,7 +480,7 @@ handle_iteration(fd_selector s) {
 
 static void
 handle_block_notifications(fd_selector s) {
-    struct selector_key key = {
+    selector_key key = {
         .s = s,
     };
     pthread_mutex_lock(&s->resolution_mutex);

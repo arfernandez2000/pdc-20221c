@@ -75,7 +75,7 @@ END_TEST
 static void *data_mark = (void *)0x0FF1CE;
 static unsigned destroy_count = 0;
 static void
-destroy_callback(struct selector_key *key) {
+destroy_callback(selector_key *key) {
     ck_assert_ptr_nonnull(key->s);
     ck_assert_int_ge(key->fd, 0);
     ck_assert_int_lt(key->fd, ITEMS_MAX_SIZE);

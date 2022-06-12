@@ -17,19 +17,19 @@ struct data {
 };
 
 static void
-on_arrival(const unsigned state, struct selector_key *key) {
+on_arrival(const unsigned state, selector_key *key) {
     struct data *d = (struct data *)key->data;
     d->arrived[state] = true;
 }
 
 static void
-on_departure(const unsigned state,struct selector_key *key) {
+on_departure(const unsigned state,selector_key *key) {
     struct data *d = (struct data *)key->data;
     d->departed[state] = true;
 }
 
 static unsigned
-on_read_ready(struct selector_key *key) {
+on_read_ready(selector_key *key) {
     struct data *d = (struct data *)key->data;
     unsigned ret;
 
@@ -42,7 +42,7 @@ on_read_ready(struct selector_key *key) {
 }
 
 static unsigned
-on_write_ready(struct selector_key *key) {
+on_write_ready(selector_key *key) {
     return on_read_ready(key);
 }
 
@@ -79,7 +79,7 @@ START_TEST (test_buffer_misc) {
     struct data data = {
         .i = 0,
     };
-    struct selector_key  key = {
+    selector_key  key = {
         .data = &data,
     };
     stm_init(&stm);

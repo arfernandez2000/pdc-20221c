@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "../buffer/buffer.h"
 
 //    The client connects to the server, and sends a version
