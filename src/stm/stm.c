@@ -40,13 +40,18 @@ void jump(state_machine *stm, unsigned next, selector_key *key) {
     if(next > stm->max_state) {
         abort();
     }
+    fprintf(stdout, "en jump\n");
+    fprintf(stdout, "next: %d\n", next);
     if(stm->current != stm->states + next) {
+        fprintf(stdout, "if 1 en jump\n");
         if(stm->current != NULL && stm->current->on_departure != NULL) {
+            fprintf(stdout, "if 1.1\n");
             stm->current->on_departure(stm->current->state, key);
         }
         stm->current = stm->states + next;
 
         if(NULL != stm->current->on_arrival) {
+            fprintf(stdout, "if 1.2\n");
             stm->current->on_arrival(stm->current->state, key);
         }
     }

@@ -65,6 +65,7 @@ static unsigned hello_read(selector_key * event){
 
 static unsigned hello_write(selector_key *event)
 {
+    fprintf(stdout, "En el hello_write\n");
     struct hello_st * state = &((Session *) (event->data))->socks.hello;
 
     unsigned ret = HELLO_WRITE;
@@ -81,15 +82,19 @@ static unsigned hello_write(selector_key *event)
     else
     {
         buffer_read_adv(state->write_buff, n);
+        fprintf(stdout, "write_buff: %s\n", state->write_buff->write);
+        fprintf(stdout, "write_buff: %s\n", state->write_buff->read);
         if (!buffer_can_read(state->write_buff))
-        {
+        {   
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_READ))
             {
                 if(state->method == METHOD_USERNAME_PASSWORD){
                     ret = AUTH_READ;
                 }
                 else{
-                    ret = REQUEST_READ;
+                    //TODO: cambiarlo
+                    //ret = REQUEST_READ;
+                    ret = DONE;
                 }
             }
             else

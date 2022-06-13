@@ -11,6 +11,7 @@ typedef struct hello_st
     buffer *read_buff, *write_buff;
     struct hello_parser parser;
     uint8_t method;
+    
 } hello_st;
 
 
@@ -24,6 +25,7 @@ typedef enum socket_state{
 enum session_state{
     HELLO_READ = 0,
     HELLO_WRITE,
+    DONE,
     AUTH_READ,
     AUTH_WRITE,
     REQUEST_READ,
@@ -32,7 +34,6 @@ enum session_state{
     REQUEST_WRITE,
     COPY,
     ERROR,
-    DONE,
 };
 
 
