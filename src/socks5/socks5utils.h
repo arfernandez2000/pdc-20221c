@@ -4,12 +4,21 @@
 #include "../user/user_utils.h"
 #include "../stm/states/hello/hello.h"
 #include "../parser/hello_parser.h"
+#include "../parser/request_parser.h"
 #include <netinet/in.h>
+
+typedef enum socket_state{
+    INVALID,
+    OPEN,
+    CLOSING,
+    CLOSED,
+}socket_state;
 
 typedef struct Connection {
     int fd;
     struct sockaddr_storage address;
     socket_state state;
+    int domain;
 
 } Connection;
 
@@ -26,40 +35,31 @@ typedef struct request_st
 {
     buffer *read_buff, *write_buff;
     struct request_parser parser;
-    uint8_t method;
+    struct request request;
+
+    enum socks_response_status method;
+
     Connection client;
     Connection server;
     
 } request_st;
 
-typedef enum socket_state{
-    INVALID,
-    OPEN,
-    CLOSING,
-    CLOSED,
-}socket_state;
+
 
 enum session_state{
     HELLO_READ = 0,
     HELLO_WRITE,
+    REQUEST_READ,
+    REQUEST_WRITE,
     DONE,
     AUTH_READ,
     AUTH_WRITE,
-    REQUEST_READ,
-    REQUEST_RESOLVE,
     REQUEST_CONNECTING,
-    REQUEST_WRITE,
+    REQUEST_RESOLVE,
     COPY,
     ERROR,
 };
 
-
-typedef struct Connection {
-    int fd;
-    struct sockaddr_storage address;
-    socket_state state;
-    int domain;
-} Connection;
 
 
 typedef union Socks_header {

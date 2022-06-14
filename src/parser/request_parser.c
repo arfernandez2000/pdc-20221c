@@ -3,6 +3,8 @@
  */
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include "request_parser.h"
 
@@ -57,10 +59,10 @@ atype (const uint8_t c, struct request_parser * p) {
     case socks_addr_type_ipv6:
         remaining_set(p, 16);
         memset(&(p->request->dest_addr.ipv6), 0, sizeof(p->request->dest_addr.ipv6));
-        p->request->dest_addr.ipv6.sin6_addr = AF_INET6;
+        p->request->dest_addr.ipv6.sin6_family = AF_INET6;
         next = request_dstaddr;
         break;
-    case socks_addr_type_domain:
+    case socks_addr_type_domain: 
         next = request_dstaddr_fqdn;
         break;
     default:
@@ -107,7 +109,7 @@ dstaddr (const uint8_t c, struct request_parser *p){
 }
 
 static enum request_state
-dstport (const uint8_tc, struct request_parser *p) {
+dstport (const uint8_t c, struct request_parser *p) {
     enum request_state next = request_dstport;
     *(((uint8_t *)&(p->request->dest_port)) + p->i) = c;
     p->i++;
@@ -200,7 +202,7 @@ request_marshal(buffer *b, const enum socks_response_status status, const enum s
         memcpy(aux, &addr.ipv6.sin6_addr, 16);
         break;
     case socks_addr_type_domain:
-        addr_size = strlen(addr.fqdn);
+        addr_size = strlen(addr.fdqn);
         aux = (uint8_t *)malloc((addr_size + 1) * sizeof(uint8_t));
         aux[0] = addr_size;
         memcpy(aux + 1, addr.fdqn, addr_size);
@@ -282,7 +284,7 @@ enum socks_response_status cmd_resolve(struct request *request, struct sockaddr 
     {
     case socks_addr_type_domain:
     {
-        struct hostent *hp = gethostbyname(request->dest_addr.fqdn);
+        struct hostent *hp = gethostbyname(request->dest_addr.fdqn);
         if (hp == 0)
         {
             memset(&request->dest_addr, 0x00, sizeof(request->dest_addr));

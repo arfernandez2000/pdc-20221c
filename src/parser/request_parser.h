@@ -85,7 +85,7 @@ struct request_parser {
     uint8_t n;
     //cuantos bytes ya leimos
     uint8_t i;
-}
+};
 
 /*Reply field:
     o  X'00' succeeded
@@ -142,7 +142,7 @@ errno_to_socks(int e);
 #include <arpa/inet.h>
 
 enum socks_response_status
-cmd_resolve(struct request* request, stuct sockaddr ** originaddr, 
+cmd_resolve(struct request* request, struct sockaddr ** originaddr, 
             socklen_t *originlen, int *domain);
 
 #endif
