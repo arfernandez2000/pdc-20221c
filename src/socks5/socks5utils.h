@@ -5,6 +5,7 @@
 #include "../stm/states/hello/hello.h"
 #include "../parser/hello_parser.h"
 #include "../parser/request_parser.h"
+#include "../selector/selector.h"
 #include <netinet/in.h>
 
 typedef enum socket_state{
@@ -63,24 +64,32 @@ enum session_state{
     REQUEST_CONNECTING,
     //REQUEST_RESOLVE,
     REQUEST_WRITE,
+    COPY,
     ERROR,
     DONE,
     AUTH_READ,
     AUTH_WRITE,
-    COPY,
 };
 
+typedef struct copy_st
+{
+    int *fd;
+    buffer *read_buff, *write_buff;
+    fd_interest duplex;
 
+    struct copy_st *other;
+}copy_st;
 
 union client_header {
     hello_st hello;    
 //    auth_st auth;
    request_st request;
-//    copy copy;
+   copy_st copy;
 };
 
 union server_header {
     connect_st conect;
+    copy_st copy;
 };
 
 typedef struct Client{

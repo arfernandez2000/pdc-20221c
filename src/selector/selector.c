@@ -468,6 +468,8 @@ handle_iteration(fd_selector s) {
                 }
             }
             if(FD_ISSET(i, &s->slave_w)) {
+                fprintf(stdout, "If de write\n");
+                fprintf(stdout, "fd: %d\n", item->fd);
                 if(OP_WRITE & item->interest) {
                     if(0 == item->handler->handle_write) {
                         assert(("OP_WRITE arrived but no handler. bug!" == 0));

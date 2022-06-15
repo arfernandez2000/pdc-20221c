@@ -94,7 +94,6 @@ static unsigned hello_write(selector_key *event)
                     ret = AUTH_READ;
                 }
                 else{
-                    //TODO: cambiarlo
                     ret = REQUEST_READ;
                 }
             }

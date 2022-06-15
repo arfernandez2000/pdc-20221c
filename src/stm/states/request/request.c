@@ -67,8 +67,8 @@ state_definition request_connecting_state_def(void) {
     state_definition state_def = {
         .state = REQUEST_CONNECTING,
         .on_arrival = request_connecting_arrival,
-        .on_read_ready = request_connecting,
-        .on_write_ready = NULL,
+        .on_read_ready = NULL,
+        .on_write_ready = request_connecting,
         .on_block_ready = NULL,
         .on_departure = NULL,
     };
@@ -161,10 +161,8 @@ static unsigned request_read(selector_key * event) {
 
     ptr = buffer_write_ptr(state->read_buff, &count);
     ssize_t n = recv(event->fd, ptr, count, 0);
-    fprintf(stdout, "que estoy recibiendo?? %s y n es %zd\n", state->read_buff->read - 2, n);
     if (n > 0)
     {
-        fprintf(stdout, "Esto me dio bien recv\n");
         buffer_write_adv(state->read_buff, n);
         const enum request_state curr_state = request_consume(state->read_buff, &state->parser, &error);
         if (request_is_done(curr_state, 0))
@@ -192,7 +190,6 @@ static unsigned request_write(selector_key *event) {
     ptr = buffer_read_ptr(state->write_buff, &count);
     ssize_t n = send(event->fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1) {
-        printf("EN EL REQUEST WRITE VA A ERROR POR N\n");
         ret = ERROR;
     }
     else {
@@ -200,12 +197,9 @@ static unsigned request_write(selector_key *event) {
         if (!buffer_can_read(state->write_buff))
         {
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_READ)) {
-                printf("EN EL REQUEST WRITE VA A DONE\n");
-                ret = DONE;
-                //ret = COPY;
+                ret = COPY;
             }
             else {
-                printf("EN EL REQUEST WRITE VA A ERROR POR CAN READ\n");
                 ret = ERROR;
             }
         }
@@ -218,9 +212,10 @@ static unsigned request_write(selector_key *event) {
 static void request_connecting_arrival(const unsigned int st, selector_key *event)
 {
     connect_st *state = &((Session *) (event->data))->server_header.conect;
-
+    printf("Client fd from event: %d\n",((Session *) (event->data))->server.fd );
     state->client_fd = &((Session *) (event->data))->client.fd;
     state->origin_fd = &((Session *) (event->data))->server.fd;
+        printf("connect client fd: %d\n", *state->origin_fd );
     state->status = &((Session *) (event->data))->client_header.request.status;
     state->write_buff= &((Session *) (event->data))->output;
 }
@@ -233,8 +228,6 @@ static unsigned request_connect(selector_key *event, request_st *state)
     struct Session *session = ((Session *) (event->data));
     int *fd = &state->server.fd;
 
-    fprintf(stdout,"File descriptor del origin_fd: %d\n", state->server.fd);
-
     if(*fd != -1) {
         fd_registered = true;
 
@@ -245,46 +238,42 @@ static unsigned request_connect(selector_key *event, request_st *state)
     }
 
     unsigned ret = REQUEST_CONNECTING;
-    printf("EN EL request connecting\n");
+    fprintf(stdout, "En request_connect!\n");
     *fd = socket(session->server.domain, SOCK_STREAM, 0);
-    printf("EN EL request connecting, el socket es %d\n", *fd);
+    session->server.fd = *fd;
+    printf("Request_connect - el socket es %d\n", *fd);
     if (*fd == -1)
     {
         error = true;
         goto finally;
     }
-    printf("EN EL request connecting despues de crear el socket\n");
 
     if (selector_fd_set_nio(*fd) == -1)
     {
         goto finally;
     }
-    printf("EN EL request connecting despues de socket no nloqueante\n");
+
     if (connect(*fd, (const struct sockaddr *)&session->server.address,
                session->server.address_len)  == -1)
     {
-        printf("EN EL request connecting, fallo el connect\n");
-        printf("address %d\n", (const struct sockaddr *)&session->server.address);
-                printf("address %lu\n",  sizeof(session->server.address));
-        printf("ERRNO, %d\n", errno);
+        printf("Request_connect - fallo el connect\n");
         if (errno == EINPROGRESS)
         {
-            printf("EN EL request connecting, errno einprogress\n");
+            printf("Request_connect - errno einprogress\n");
             selector_status st = selector_set_interest_key(event, OP_NOOP);
             if (st != SELECTOR_SUCCESS)
             {
-                printf("EN EL request connecting, not selector success\n");
                 error = true;
                 goto finally;
             }
-            printf("EN EL request connecting, selector success\n");
+            printf("EN EL request connect, selector success\n");
             if(!fd_registered) {
-                printf("EN EL request connecting, fd_registered\n");
                 st = selector_register(event->s, *fd, &client_handler_request, OP_WRITE, event->data);
-                printf("EN EL request connecting, %d\n", st);
+
+                printf("request_connect, fd register as: %d\n", *fd);
             }
             else {
-                printf("EN EL request connecting, else\n");
+                printf("EN EL request connect, else\n");
                 st = selector_set_interest(event->s, *fd, OP_WRITE);
             }
 
@@ -296,7 +285,7 @@ static unsigned request_connect(selector_key *event, request_st *state)
         }
         else
         {
-            printf("EN EL request connecting, erno default\n");
+            printf("EN EL request connect, erno default\n");
             session->client_header.request.status = errno_to_socks(errno);
             if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
             {
@@ -324,22 +313,27 @@ finally:
 
 static unsigned request_connecting(selector_key *event)
 {
+    fprintf(stdout, "Estoy en request_connecting!");
     int error;
     socklen_t len = sizeof(error);
     unsigned ret = REQUEST_CONNECTING;
 
     struct Session *session = ((Session *) (event->data));
-    int *fd = session->server_header.conect.origin_fd;
-    if (getsockopt(*fd, SOL_SOCKET, SO_ERROR, &error, &len) == 0)
+    int *fd = &session->server.fd;
+    int ret_sock = getsockopt(*fd, SOL_SOCKET, SO_ERROR, &error, &len);
+    fprintf(stdout, "getscokopt ret: %d\n", ret_sock);
+    if (ret_sock == 0)
     {
+        fprintf(stdout, "if de request_connecting\n");
         selector_set_interest(event->s, *session->server_header.conect.client_fd, OP_WRITE);
         
         if (error == 0)
         {
+            fprintf(stdout, "Success\n");
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
         }
-        else if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
+        if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
         {
             selector_set_interest(event->s, *session->server_header.conect.origin_fd, OP_READ);
             
@@ -350,6 +344,7 @@ static unsigned request_connecting(selector_key *event)
         }
         //ATTACHMENT(key)->socks_info.status = data->client.request.status;    
     }
-
+    fprintf(stdout, "getscokopt error: %d\n", error);
+    fprintf(stdout, "getscokopt fd: %d\n", *fd);
     return ret;
 }

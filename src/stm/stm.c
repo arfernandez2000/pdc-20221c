@@ -55,6 +55,7 @@ void jump(state_machine *stm, unsigned next, selector_key *key) {
 
         if(NULL != stm->current->on_arrival) {
             fprintf(stdout, "if 1.2\n");
+            fprintf(stdout, "current_state en jump: %d\n", stm->current->state);
             stm->current->on_arrival(stm->current->state, key);
         }
     }
@@ -77,8 +78,10 @@ stm_handler_read(state_machine *stm, selector_key *key) {
 
 unsigned
 stm_handler_write(state_machine *stm, selector_key *key) {
+    fprintf(stdout, "Estoy en stm_handler_write\n");
     handle_first(stm, key);
     if(stm->current->on_write_ready == 0) {
+        fprintf(stdout, "Abort de stm_handler_write\n");
         abort();
     }
     const unsigned int ret = stm->current->on_write_ready(key);

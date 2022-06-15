@@ -2,6 +2,7 @@
 #include "../socks5/socks5utils.h"
 #include "states/hello/hello.h"
 #include "states/request/request.h"
+#include "states/copy/copy.h"
 
 static state_definition session_state_def[DONE + 1];
 
@@ -42,6 +43,7 @@ void stm_map() {
     //session_state_def[REQUEST_RESOLVE] = request_resolve_state_def();
     session_state_def[REQUEST_CONNECTING] = request_connecting_state_def();
     session_state_def[REQUEST_WRITE] = request_write_state_def();
+    session_state_def[COPY] = copy_state_def();
     session_state_def[ERROR] = error_state_def();
     session_state_def[DONE] = done_state_def();
 }
