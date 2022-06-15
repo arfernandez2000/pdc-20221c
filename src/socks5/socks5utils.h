@@ -19,6 +19,7 @@ typedef struct Connection {
     struct sockaddr_storage address;
     socket_state state;
     int domain;
+    socklen_t address_len;
 
 } Connection;
 
