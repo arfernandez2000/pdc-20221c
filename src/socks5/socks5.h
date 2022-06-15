@@ -6,8 +6,7 @@
 #include <errno.h>
 #include <time.h>
 
-#include "../selector/selector.h"
-#include "socks5utils.h"
+#include "../stm/stm.h"
 
 #ifndef SOCKS5_H
 #define SOCKS5_H
@@ -22,10 +21,16 @@ static void server_write(selector_key * event);
 static void server_read(selector_key * event);
 static void server_close(selector_key * event);
 static void close_session(selector_key * event);
-static void client_close(selector_key *event);
-static void client_read(selector_key  *event);
-static void client_write(selector_key * event);
-static Session * initialize_session();
+void client_close(selector_key *event);
+void client_read(selector_key  *event);
+void client_write(selector_key * event);
+
+
+// const struct fd_handler server_handler = {
+//     .handle_read   = server_read,
+//     .handle_write  = server_write,
+//     .handle_close  = server_close,
+// };
 
 
 #endif

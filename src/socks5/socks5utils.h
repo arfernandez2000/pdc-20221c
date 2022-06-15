@@ -37,12 +37,21 @@ typedef struct request_st
     struct request_parser parser;
     struct request request;
 
-    enum socks_response_status method;
+    enum socks_response_status status;
 
     Connection client;
     Connection server;
     
 } request_st;
+
+typedef struct connect_st
+{
+    buffer *write_buff;
+    const int *client_fd;
+    int *origin_fd;
+    enum socks_response_status *status;
+
+} connect_st;
 
 
 
@@ -50,24 +59,28 @@ enum session_state{
     HELLO_READ = 0,
     HELLO_WRITE,
     REQUEST_READ,
+    REQUEST_CONNECTING,
+    //REQUEST_RESOLVE,
     REQUEST_WRITE,
+    ERROR,
     DONE,
     AUTH_READ,
     AUTH_WRITE,
-    REQUEST_CONNECTING,
-    REQUEST_RESOLVE,
     COPY,
-    ERROR,
 };
 
 
 
-typedef union Socks_header {
+union client_header {
     hello_st hello;    
 //    auth_st auth;
    request_st request;
 //    copy copy;
-} SocksHeaders;
+};
+
+union server_header {
+    connect_st conect;
+};
 
 typedef struct Client{
     uint8_t authentication;
@@ -88,7 +101,8 @@ typedef struct Session {
     Connection server;
 
     Client client_information;
-    union Socks_header socks;
+    union client_header client_header;
+    union server_header server_header;
 
     time_t lastModified;
 } Session;

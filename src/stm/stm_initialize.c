@@ -19,6 +19,20 @@ state_definition done_state_def(void) {
     return state_def;
 }
 
+state_definition error_state_def(void) {
+
+    state_definition state_def = {
+        .state = ERROR,
+        .on_arrival = NULL,
+        .on_read_ready = NULL,
+        .on_write_ready = NULL,
+        .on_block_ready = NULL,
+        .on_departure = NULL,
+    };
+
+    return state_def;
+}
+
 void stm_map() {
     session_state_def[HELLO_READ] = hello_state_def();
     session_state_def[HELLO_WRITE] = hello_write_state_def();
@@ -26,10 +40,9 @@ void stm_map() {
     //session_state_def[AUTH_WRITE] = auth_write_state_def();
     session_state_def[REQUEST_READ] = request_read_state_def();
     //session_state_def[REQUEST_RESOLVE] = request_resolve_state_def();
-    // session_state_def[REQUEST_CONNECTING] = request_connecting_def();
+    session_state_def[REQUEST_CONNECTING] = request_connecting_state_def();
     session_state_def[REQUEST_WRITE] = request_write_state_def();
-    //session_state_def[ERROR] = error_state_def();
-    //session_state_def[DONE] = done_state_def();
+    session_state_def[ERROR] = error_state_def();
     session_state_def[DONE] = done_state_def();
 }
 

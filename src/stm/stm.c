@@ -37,7 +37,10 @@ handle_first(state_machine *stm, selector_key *key) {
 
 inline static
 void jump(state_machine *stm, unsigned next, selector_key *key) {
+    fprintf(stdout,"next: %d\n", next);
+    fprintf(stdout,"max_state: %d\n", stm->max_state);
     if(next > stm->max_state) {
+        fprintf(stdout,"Estoy en abort de jump\n");
         abort();
     }
     fprintf(stdout, "en jump\n");
@@ -62,9 +65,11 @@ stm_handler_read(state_machine *stm, selector_key *key) {
     fprintf(stdout,"Estoy en stm_handler_read!\n");
     handle_first(stm, key);
     if(stm->current->on_read_ready == 0) {
+        fprintf(stdout,"Abort de stm_handle_read\n");
         abort();
     }
     const unsigned int ret = stm->current->on_read_ready(key);
+    fprintf(stdout,"Respuesta del on_read_ready: %d\n", ret);
     jump(stm, ret, key);
 
     return ret;

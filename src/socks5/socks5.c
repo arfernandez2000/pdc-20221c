@@ -2,6 +2,10 @@
 #include "../buffer/buffer.h"
 #include "../args/args.h"
 #include "../stm/stm_initialize.h"
+#include "socks5utils.h"
+
+static Session* initialize_session();
+
 
 static int inputBufferSize;
 static int outputBufferSize;
@@ -141,7 +145,7 @@ static Session* initialize_session() {
     // state_definition s_definition[FINISH + 1];
 // }
 
-static void client_write(selector_key * event){
+void client_write(selector_key * event){
 
     fprintf(stdout,"Estoy en client_write!\n");
     
@@ -155,7 +159,7 @@ static void client_write(selector_key * event){
     
 }
 
-static void client_read(selector_key  *event)
+void client_read(selector_key  *event)
 {
     fprintf(stdout,"Estoy en client_read!\n");
     state_machine * stm = &((Session *) event->data)->s_machine;
@@ -167,8 +171,8 @@ static void client_read(selector_key  *event)
     }
 }
 
-static void client_close(selector_key *event){
-    fprintf(stdout, "Estoy en el client_close");
+void client_close(selector_key *event){
+    fprintf(stdout, "Estoy en el client_close\n");
     Session * session = (Session * ) event->data;
     
     close(session->client.fd);
@@ -178,7 +182,7 @@ static void client_close(selector_key *event){
 }
     
 static void close_session(selector_key * event){
-    fprintf(stdout, "Estoy en el close_session");
+    fprintf(stdout, "Estoy en el close_session\n");
     Session * session = (Session *) event->data;
     selector_unregister_fd(event->s, session->client.fd);
     close(session->client.fd);

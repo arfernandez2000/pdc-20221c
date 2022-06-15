@@ -132,8 +132,8 @@ request_is_done(const enum request_state st, bool *errored);
 void 
 request_close(struct request_parser *p);
 
-extern int
-request_marshall(buffer *b, const enum socks_response_status status);
+int 
+request_marshal(buffer *b, const enum socks_response_status status, const enum socks_addr_type atyp, const union socks_addr addr, const in_port_t dest_port);
 
 enum socks_response_status
 errno_to_socks(int e);

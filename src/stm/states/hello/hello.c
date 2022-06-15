@@ -21,7 +21,8 @@ static void on_hello_method(void *data, const uint8_t method)
 }
 
 static void hello_arrival(unsigned int st, selector_key * event){
-    hello_st * state  = &((Session *) (event->data)) ->socks.hello;
+    fprintf(stdout,"Estoy en hello_arrival!\n");
+    hello_st * state  = &((Session *) (event->data)) ->client_header.hello;
     state->read_buff = &((Session *) (event->data)) ->input;
     state->write_buff =  &((Session *) (event->data)) ->output;
     hello_parser_init(&state->parser);
@@ -30,7 +31,8 @@ static void hello_arrival(unsigned int st, selector_key * event){
 }
 
 static unsigned hello_read(selector_key * event){
-    struct hello_st * state = &((Session *) (event->data))->socks.hello;
+    fprintf(stdout, "Estoy en el hello_read!\n");
+    struct hello_st * state = &((Session *) (event->data))->client_header.hello;
     unsigned ret = HELLO_READ;
     bool error = false;
     uint8_t * ptr;
@@ -66,14 +68,14 @@ static unsigned hello_read(selector_key * event){
 static unsigned hello_write(selector_key *event)
 {
     fprintf(stdout, "En el hello_write\n");
-    struct hello_st * state = &((Session *) (event->data))->socks.hello;
+    struct hello_st * state = &((Session *) (event->data))->client_header.hello;
 
     unsigned ret = HELLO_WRITE;
     uint8_t *ptr;
     size_t count;
     ssize_t n;
 
-    ptr = buffer_read_ptr(state->read_buff, &count);
+    ptr = buffer_read_ptr(state->write_buff, &count);
     n = send(event->fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1)
     {
@@ -93,8 +95,7 @@ static unsigned hello_write(selector_key *event)
                 }
                 else{
                     //TODO: cambiarlo
-                    //ret = REQUEST_READ;
-                    ret = DONE;
+                    ret = REQUEST_READ;
                 }
             }
             else
