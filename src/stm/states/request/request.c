@@ -1,6 +1,6 @@
-#include "../../socks5/socks5utils.h"
-#include "../../parser/request_parser.h"
-#include "../../socks5/socks5.h"
+#include "../../../socks5/socks5utils.h"
+#include "../../../parser/request_parser.h"
+#include "../../../socks5/socks5.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -79,16 +79,16 @@ state_definition request_connecting_state_def(void) {
 static void request_arrival(const unsigned st, selector_key * event)
 {
     fprintf(stdout,"Estoy en request_arrival\n");
-    request_st * state = &((Session *) (event->data)) ->client_header.request;
-    state->read_buff = &((Session *) (event->data)) ->input;
-    state->write_buff =  &((Session *) (event->data)) ->output;
+    request_st * state = &((Session *) (event->data))->client_header.request;
+    state->read_buff = &((Session *) (event->data))->input;
+    state->write_buff =  &((Session *) (event->data))->output;
     state->parser.request = &state->request;
     state->status = status_general_SOCKS_server_failure;
     request_parser_init(&state->parser);
     
-    state->client.fd = ((Session *) (event->data)) ->client.fd;
-    state->server.fd =  ((Session *) (event->data)) ->server.fd;
-
+    state->client.fd = ((Session *) (event->data))->client.fd;
+    state->server.fd =  ((Session *) (event->data))->server.fd;
+    fprintf(stdout, "Server fd: %d\n", state->server.fd);
     state->server.address = ((Session *) (event->data)) ->server.address;
     state->server.domain = ((Session *) (event->data)) ->server.domain;
     fprintf(stdout,"Saliendo de request_arrival\n");
@@ -196,7 +196,8 @@ static unsigned request_write(selector_key *event) {
         if (!buffer_can_read(state->write_buff))
         {
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_READ)) {
-                ret = COPY;
+                ret = REQUEST_READ;
+                //ret = COPY;
             }
             else {
                 ret = ERROR;
@@ -224,6 +225,8 @@ static unsigned request_connect(selector_key *event, request_st *state)
     bool fd_registered = false;
     struct Session *session = ((Session *) (event->data));
     int *fd = &state->server.fd;
+
+    fprintf(stdout,"File descriptor del origin_fd: %d\n", state->server.fd);
 
     if(*fd != -1) {
         fd_registered = true;

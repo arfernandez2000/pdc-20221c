@@ -54,6 +54,7 @@ void new_connection_ipv4(selector_key *event) {
     session->lastModified = time(NULL);
 
     session->client.fd = fd;
+    session->server.fd = -1;
 
     memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
 

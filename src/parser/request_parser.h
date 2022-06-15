@@ -87,31 +87,6 @@ struct request_parser {
     uint8_t i;
 };
 
-/*Reply field:
-    o  X'00' succeeded
-    o  X'01' general SOCKS server failure
-    o  X'02' connection not allowed by ruleset
-    o  X'03' Network unreachable
-    o  X'04' Host unreachable
-    o  X'05' Connection refused
-    o  X'06' TTL expired
-    o  X'07' Command not supported
-    o  X'08' Address type not supported
-    o  X'09' to X'FF' unassigned
-*/
-
-enum socks_response_status {
-    status_succeeded = 0X00,
-    status_general_SOCKS_server_failure = 0X01,
-    status_connection_not_allowed_by_ruleset = 0x02,
-    status_network_unreachable = 0x03,
-    status_host_unreachable = 0x04,
-    status_connection_refused = 0x05,
-    status_TTL_expired = 0x06,
-    status_command_not_supported = 0x07,
-    status_address_type_not_supported = 0x08,
-};
-
 /** inicializa el parser */
 void
 request_parser_init (struct request_parser *p);
@@ -132,6 +107,57 @@ request_is_done(const enum request_state st, bool *errored);
 void 
 request_close(struct request_parser *p);
 
+/**
+ * @brief The server evaluates the request, and
+   returns a reply formed as follows:
+
+        +----+-----+-------+------+----------+----------+
+        |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
+        +----+-----+-------+------+----------+----------+
+        | 1  |  1  | X'00' |  1   | Variable |    2     |
+        +----+-----+-------+------+----------+----------+
+
+     Where:
+
+          o  VER    protocol version: X'05'
+          o  REP    Reply field:
+             o  X'00' succeeded
+             o  X'01' general SOCKS server failure
+             o  X'02' connection not allowed by ruleset
+             o  X'03' Network unreachable
+             o  X'04' Host unreachable
+             o  X'05' Connection refused
+             o  X'06' TTL expired
+             o  X'07' Command not supported
+             o  X'08' Address type not supported
+             o  X'09' to X'FF' unassigned
+          o  RSV    RESERVED
+          o  ATYP   address type of following address
+          o  IP V4 address: X'01'
+             o  DOMAIN_NAME: X'03'
+             o  IP V6 address: X'04'
+          o  BND.ADDR       server bound address
+          o  BND.PORT       server bound port in network octet order
+
+   Fields marked RESERVED (RSV) must be set to X'00'.
+ * 
+ */
+
+enum socks_response_status {
+    status_succeeded = 0X00,
+    status_general_SOCKS_server_failure = 0X01,
+    status_connection_not_allowed_by_ruleset = 0x02,
+    status_network_unreachable = 0x03,
+    status_host_unreachable = 0x04,
+    status_connection_refused = 0x05,
+    status_TTL_expired = 0x06,
+    status_command_not_supported = 0x07,
+    status_address_type_not_supported = 0x08,
+};
+
+/** ensambla la respuesta del hello dentro del buffer con el metodo 
+ * seleccionado.
+**/
 int 
 request_marshal(buffer *b, const enum socks_response_status status, const enum socks_addr_type atyp, const union socks_addr addr, const in_port_t dest_port);
 

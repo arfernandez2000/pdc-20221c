@@ -1,7 +1,7 @@
 #include "stm_initialize.h"
 #include "../socks5/socks5utils.h"
 #include "states/hello/hello.h"
-#include "states/request.h"
+#include "states/request/request.h"
 
 static state_definition session_state_def[DONE + 1];
 
