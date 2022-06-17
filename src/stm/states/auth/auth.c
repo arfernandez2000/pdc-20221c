@@ -1,37 +1,9 @@
 #include "../../../socks5/socks5utils.h"
 #include "../../stm_initialize.h"
 
-state_definition auth_read_def(void) {
-
-    state_definition state_def = {
-        .state = AUTH_READ,
-        .on_arrival = auth_arrival,
-        .on_read_ready = auth_read,
-        .on_write_ready = NULL,
-        .on_block_ready = NULL,
-        .on_departure = NULL,
-    };
-
-    return state_def;
-}
-
-state_definition auth_write_def(void) {
-
-    state_definition state_def = {
-        .state = AUTH_WRITE,
-        .on_arrival = NULL,
-        .on_read_ready = NULL,
-        .on_write_ready = auth_write,
-        .on_block_ready = NULL,
-        .on_departure = NULL,
-    };
-
-    return state_def;
-}
-
-static void auth_arrival(selector_key * event)
+static void auth_arrival(unsigned int st, selector_key * event)
 {
-    auth_st* state = &((Session *) (event->date))->socks.auth;
+    auth_st* state = &((Session *) (event->data))->client_header.auth;
     state->read_buff = &((Session *) (event->data)) ->input;
     state->write_buff =  &((Session *) (event->data)) ->output;
     // auth_parser_init(&state->parser);
@@ -39,8 +11,26 @@ static void auth_arrival(selector_key * event)
     // &((Session *) (event->date))->client_information->user->password = &state->parser.password;
 }
 
+static unsigned auth_process(const struct auth_st *state) {
+    unsigned ret = AUTH_WRITE;
+    
+    //TODO: habria que validar que las credentials sean validas
+    // Esta escrito por el coda
+    // uint8_t credential_status = validate_credentials(state);
+
+    uint8_t method = state->method;
+    if (-1 == auth_marshal(state->write_buff, method)) {
+        ret = ERROR;
+    }
+    if (method == METHOD_NO_ACCEPTABLE_METHODS) {
+        ret = ERROR;
+    }
+
+    return ret;
+}
+
 static unsigned auth_read(selector_key* event) {
-    struct auth_st * state = &((Session *) (event->data))->socks.auth;
+    struct auth_st * state = &((Session *) (event->data))->client_header.auth;
     unsigned ret = AUTH_READ;
     bool error = false;
     uint8_t *ptr;
@@ -73,8 +63,8 @@ static unsigned auth_read(selector_key* event) {
     return error ? ERROR : ret;
 }
 
-static unsigned auth_write(selector_key *event){
-    struct auth_st * state = &((Session *) (event->data))->socks.auth;
+static unsigned auth_write(selector_key *event) {
+    struct auth_st * state = &((Session *) (event->data))->client_header.auth;
     unsigned ret = AUTH_WRITE;
     uint8_t *ptr;
     size_t count;
@@ -82,7 +72,7 @@ static unsigned auth_write(selector_key *event){
 
     ptr = buffer_read_ptr(state->write_buff,&count);
     n = send(event->fd,ptr,count,MSG_NOSIGNAL);
-    if(state->method != AUTH_SUCCESS){
+    if(n == -1){
         ret = ERROR;
     }
     else if (n > 0){
@@ -99,20 +89,30 @@ static unsigned auth_write(selector_key *event){
     return ret;
 }
 
-static unsigned auth_process(const struct auth_st *state) {
-    unsigned ret = AUTH_WRITE;
-    
-    //TODO: habria que validar que las credentials sean validas
-    // Esta escrito por el coda
-    uint8_t credential_status = validate_credentials(state);
+state_definition auth_read_def(void) {
 
-    uint8_t method = state->method;
-    if (-1 == auth_marshall(state->write_buff, method)) {
-        ret = ERROR;
-    }
-    if (method == METHOD_NO_ACCEPTABLE_METHODS) {
-        ret = ERROR;
-    }
+    state_definition state_def = {
+        .state = AUTH_READ,
+        .on_arrival = auth_arrival,
+        .on_read_ready = auth_read,
+        .on_write_ready = NULL,
+        .on_block_ready = NULL,
+        .on_departure = NULL,
+    };
 
-    return ret;
+    return state_def;
+}
+
+state_definition auth_write_def(void) {
+
+    state_definition state_def = {
+        .state = AUTH_WRITE,
+        .on_arrival = NULL,
+        .on_read_ready = NULL,
+        .on_write_ready = auth_write,
+        .on_block_ready = NULL,
+        .on_departure = NULL,
+    };
+
+    return state_def;
 }

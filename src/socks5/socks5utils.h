@@ -5,7 +5,9 @@
 #include "../stm/states/hello/hello.h"
 #include "../parser/hello_parser.h"
 #include "../parser/request_parser.h"
+#include "../parser/auth_parser.h"
 #include "../selector/selector.h"
+#include "../args/args.h"
 #include <netinet/in.h>
 
 typedef enum socket_state{
@@ -32,6 +34,12 @@ typedef struct hello_st
     
 } hello_st;
 
+typedef struct auth_st {
+    buffer *read_buff, *write_buff;
+    auth_parser parser;
+    struct users user;
+    uint8_t method;
+} auth_st;
 
 typedef struct request_st
 {
@@ -82,9 +90,9 @@ typedef struct copy_st
 
 union client_header {
     hello_st hello;    
-//    auth_st auth;
-   request_st request;
-   copy_st copy;
+    auth_st auth;
+    request_st request;
+    copy_st copy;
 };
 
 union server_header {
