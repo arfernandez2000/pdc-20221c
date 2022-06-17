@@ -1,0 +1,60 @@
+Para un GET:
+
+                    +----+-----+
+                    |TYP | CMD |
+                    +----+-----+
+                    | 1  |  1  |
+                    +----+-----+
+
+     Donde:
+
+          o  TYP    tipo de comando: X'00' GET
+          o  CMD
+             o  GET bytes transferidos X'01'
+             o  GET conexiones historicas X'02'
+             o  GET conexiones concurrentes X'03'
+             o  GET listar usuarios X'04'
+
+El proxy evalua la request y devuleve una reply formateada de la siguiente manera:
+
+        +----+-----+--------+--------+
+        |CMD | REP | NARGS  |  ARGS  |
+        +----+-----+--------+--------+
+        | 1  |  1  |1 to 255|variable|
+        +----+-----+--------+--------+
+
+     Donde:
+
+          o  CMD    comando solicitado: 
+             o  GET bytes transferidos X'01'
+             o  GET conexiones historicas X'02'
+             o  GET conexiones concurrentes X'03'
+             o  GET listar usuarios X'04
+          o  REP    Reply field:
+             o  X'00' succeeded
+             o  X'01' server failure
+             o  X'02' command not supported
+             o  X'03' type not supported
+          o  NARGS    cantidad de argumentos del campo ARGS
+          o  ARGS     argumentos del comando solicitado, 
+                      cuyo primer byte corresponde a la longitud del argumento
+
+Agregar usuario:
+            +------+-------+-----+------+----------+------+----------+
+            | TYP  |  CMD  |ADMIN| ULEN |   UNAME  | PLEN |  PASSWD  |
+            +------+-------+-----+------+----------+------+----------+
+            |   1  |   1   |  1  |   1  | 1 to 255 |   1  | 1 to 255 |
+            +------+-------+-----+------+----------+------+----------+
+     Donde:
+
+          o  TYP    tipo de comando: X'01' USERS
+          o  CMD    comando solicitado: X'01' CREATE
+          o  ADMIN  flag para indicar tipo de usuario
+             o  X'00' admin
+             o  X'01' user
+          o  ULEN   longitud del campo UNAME
+          o  UNAME  nombre del usuario
+          o  PLEN   longitud del campo PAWSSWD
+          o  PLEN   contraseña
+          
+
