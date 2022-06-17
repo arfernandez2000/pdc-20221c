@@ -16,6 +16,7 @@
 
 void initialize_socks5();
 void new_connection_ipv4();
+void new_connection_ipv6();
 static void initialize_state_machine(state_machine * stm);
 static void server_write(selector_key * event);
 static void server_read(selector_key * event);

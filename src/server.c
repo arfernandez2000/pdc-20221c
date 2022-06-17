@@ -36,6 +36,7 @@ static socks5args args;
 static server_handler serverHandler;
 static int generate_socket(struct sockaddr * addr, socklen_t addr_len);
 static int generate_socket_ipv4(fd_selector selector);
+static int generate_socket_ipv6(fd_selector selector);
 void listen_interfaces(fd_selector selector);
 static fd_selector init_selector();
 
@@ -65,7 +66,6 @@ int main(const int argc, char **argv) {
 
     for(;!done;) {
         ss = selector_select(selector);
-        //ACA SE ROMPE EN EL SS
         if(ss != SELECTOR_SUCCESS) {
             perror("Fallo en el while 1");
         }
@@ -99,8 +99,10 @@ static fd_selector init_selector(){
 
 
 void listen_interfaces(fd_selector selector) {
+    serverHandler.ipv6addr = in6addr_any;
     serverHandler.ipv4addr.s_addr = htonl(INADDR_ANY);
     generate_socket_ipv4(selector);
+    generate_socket_ipv6(selector);
 }
 
 static int generate_socket_ipv4(fd_selector selector){
@@ -126,6 +128,32 @@ static int generate_socket_ipv4(fd_selector selector){
     }
 
     serverHandler.ipv4Fd = ipv4Fd; 
+    return 0;
+}
+
+static int generate_socket_ipv6(fd_selector selector){
+    memset(&serverHandler.ipv6_handler, '\0', sizeof(serverHandler.ipv6_handler));
+
+    // LLamo a la funcioan que socks5 a ejecutar
+    serverHandler.ipv6_handler.handle_read = new_connection_ipv6;
+
+    struct sockaddr_in6 sockaddr6 = {
+        .sin6_addr = serverHandler.ipv6addr,
+        .sin6_family = AF_INET6,
+        .sin6_port = serverHandler.port,
+    };
+
+    int ipv6Fd = generate_socket((struct sockaddr *)&sockaddr6, sizeof(sockaddr6));
+    if(ipv6Fd == -1) {
+        return -1;
+    }
+
+    if(selector_register(selector, ipv6Fd, &serverHandler.ipv6_handler, OP_READ, NULL)){
+        perror("Failed file descriptor registration for ipv6");
+        return -1;
+    }
+
+    serverHandler.ipv6Fd = ipv6Fd; 
     return 0;
 }
 

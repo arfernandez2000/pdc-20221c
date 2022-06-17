@@ -62,6 +62,36 @@ void new_connection_ipv4(selector_key *event) {
 
 }
 
+void new_connection_ipv6(selector_key *event) {
+
+    struct sockaddr_in6 cli_address;
+    socklen_t clilen = sizeof(cli_address);
+
+    int fd;
+
+    do {
+        fd = accept(event->fd, (struct sockaddr *)&cli_address, &clilen);
+    } while (fd < 0 && (errno == EINTR));
+
+
+    Session * session = initialize_session();  
+    if (session == NULL) {
+        perror("somos unos perrors");
+        close(fd);
+        return;
+    }
+
+    session->lastModified = time(NULL);
+
+    session->client.fd = fd;
+    session->server.fd = -1;
+
+    memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
+
+    selector_register(event->s, session->client.fd, &client_handler, OP_READ, session);
+
+}
+
 static Session* initialize_session() {
     fprintf(stdout,"initialize_session");
     Session* session = malloc(sizeof(*session));

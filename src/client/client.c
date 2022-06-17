@@ -19,16 +19,20 @@ int main(int argc, char* argv[]){
     uint16_t port = 8080;
 
     struct in_addr ip_addr;
+    struct in6_addr ip_addr6;
+    int file_descriptor;
 
     //Hay que conectarse con conexion ipv4. Para eso,
     //primero hay que pasar la informacion de texto
     //a binario con la funcion inet_pton()
-    int aux = inet_pton(AF_INET, ip, &ip_addr);
-    printf("Aux: %d\n", aux);
-    //si ip es dinamico agregar condicionales
-    
-    // htons para normaliazar big-endian y little-endian
-    int file_descriptor = connect_by_ipv4(ip_addr, htons(port));
+    if(inet_pton(AF_INET, ip, &ip_addr)){
+        file_descriptor = connect_by_ipv4(ip_addr, htons(port));
+    }else if(inet_pton(AF_INET6, ip, &ip_addr6)){
+        file_descriptor = connect_by_ipv6(ip_addr6, htons(port));
+    }else{
+        perror("IP address is invalid");
+        exit(1);
+    }
 
     if(file_descriptor == -1){
         perror("Connection error");
