@@ -5,6 +5,7 @@
 #include "../buffer/buffer.h"
 
 #define MAX_LEN 0xFF
+#define AUTH_SUCCESS 0x00
 
 /**
  * This begins with the client producing a
