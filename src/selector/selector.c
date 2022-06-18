@@ -389,12 +389,12 @@ selector_unregister_fd(fd_selector       s,
     }
 
     if(item->handler->handle_close != NULL) {
-        selector_key key = {
+        selector_key s_key = {
             .s    = s,
             .fd   = item->fd,
             .data = item->data,
         };
-        item->handler->handle_close(&key);
+        item->handler->handle_close(&s_key);
     }
 
     item->interest = OP_NOOP;
@@ -428,13 +428,13 @@ finally:
 }
 
 selector_status
-selector_set_interest_key(selector_key *key, fd_interest i) {
+selector_set_interest_key(selector_key *s_key, fd_interest i) {
     selector_status ret;
 
-    if(NULL == key || NULL == key->s || INVALID_FD(key->fd)) {
+    if(NULL == s_key || NULL == s_key->s || INVALID_FD(s_key->fd)) {
         ret = SELECTOR_IARGS;
     } else {
-        ret = selector_set_interest(key->s, key->fd, i);
+        ret = selector_set_interest(s_key->s, s_key->fd, i);
     }
 
     return ret;
@@ -447,14 +447,14 @@ selector_set_interest_key(selector_key *key, fd_interest i) {
 static void
 handle_iteration(fd_selector s) {
     int n = s->max_fd;
-    selector_key key = {
+    selector_key s_key = {
         .s = s,
     };
     for (int i = 0; i <= n; i++) {
         struct item *item = s->fds + i;
         if(ITEM_USED(item)) {
-            key.fd   = item->fd;
-            key.data = item->data;
+            s_key.fd   = item->fd;
+            s_key.data = item->data;
             if(FD_ISSET(item->fd, &s->slave_r)) {
                 if(OP_READ & item->interest) {
                     if(0 == item->handler->handle_read) {
@@ -462,7 +462,7 @@ handle_iteration(fd_selector s) {
                     } else {
                         //ACA SE ROMPE
                         fprintf(stdout,"ANTES DE GENERAR EL SOCKET %d\n", s->fds->fd);
-                        item->handler->handle_read(&key);
+                        item->handler->handle_read(&s_key);
                         fprintf(stdout,"Despues de general el socket\n\n");
                     }
                 }
@@ -474,7 +474,7 @@ handle_iteration(fd_selector s) {
                     if(0 == item->handler->handle_write) {
                         assert(("OP_WRITE arrived but no handler. bug!" == 0));
                     } else {
-                        item->handler->handle_write(&key);
+                        item->handler->handle_write(&s_key);
                     }
                 }
             }
@@ -484,7 +484,7 @@ handle_iteration(fd_selector s) {
 
 static void
 handle_block_notifications(fd_selector s) {
-    selector_key key = {
+    selector_key s_key = {
         .s = s,
     };
     pthread_mutex_lock(&s->resolution_mutex);
@@ -494,9 +494,9 @@ handle_block_notifications(fd_selector s) {
 
         struct item *item = s->fds + j->fd;
         if(ITEM_USED(item)) {
-            key.fd   = item->fd;
-            key.data = item->data;
-            item->handler->handle_block(&key);
+            s_key.fd   = item->fd;
+            s_key.data = item->data;
+            item->handler->handle_block(&s_key);
         }
 
         free(j);

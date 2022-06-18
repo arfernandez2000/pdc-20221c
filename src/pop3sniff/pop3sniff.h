@@ -1,3 +1,6 @@
+#ifndef POP3SNIFF_H
+#define POP3SNIFF_H
+
 #include <stdint.h>
 #include "../buffer/buffer.h"
 
@@ -39,5 +42,7 @@ bool pop3_done(struct pop3_sniff *sniff);
 bool pop3_parsing(struct pop3_sniff *sniff);
 
 enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff);
+
+#endif
 
 

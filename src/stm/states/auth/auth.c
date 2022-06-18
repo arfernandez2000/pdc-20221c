@@ -37,7 +37,7 @@ static unsigned auth_read(selector_key* event) {
     size_t count;
 
     ptr = buffer_write_ptr(state->read_buff,&count);
-    ssize_t n = recv(key->fd,ptr,count,0);
+    ssize_t n = recv(s_key->fd,ptr,count,0);
     if (n > 0)
     {
         buffer_write_adv(state->read_buff,n);
@@ -46,7 +46,7 @@ static unsigned auth_read(selector_key* event) {
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_WRITE))
             {
                 ret = auth_process(state);
-                //memcpy(&ATTACHMENT(key)->socks_info.user_info,&d->parser.usr,sizeof(d->parser.usr));
+                //memcpy(&ATTACHMENT(s_key)->socks_info.user_info,&d->parser.usr,sizeof(d->parser.usr));
                 
             }
             else{

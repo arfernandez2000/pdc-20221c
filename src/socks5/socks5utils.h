@@ -1,3 +1,6 @@
+#ifndef SOCKS5UTILS_H
+#define SOCKS5UTILS_H
+
 #include "../buffer/buffer.h"
 #include "../stm/stm.h"
 #include "../defs.h"
@@ -124,3 +127,5 @@ typedef struct Session {
 
     time_t lastModified;
 } Session;
+
+#endif

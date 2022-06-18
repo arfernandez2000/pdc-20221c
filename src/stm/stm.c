@@ -24,19 +24,19 @@ stm_init(state_machine *stm) {
 }
 
 inline static void
-handle_first(state_machine *stm, selector_key *key) {
+handle_first(state_machine *stm, selector_key *s_key) {
     if(stm->current == NULL) {
         stm->current = stm->states + stm->initial;
         if(NULL != stm->current->on_arrival) {
             fprintf(stdout,"Estoy en el if de handle_first!\n");
-            stm->current->on_arrival(stm->current->state, key);
+            stm->current->on_arrival(stm->current->state, s_key);
         }
     }
     
 }
 
 inline static
-void jump(state_machine *stm, unsigned next, selector_key *key) {
+void jump(state_machine *stm, unsigned next, selector_key *s_key) {
     fprintf(stdout,"next: %d\n", next);
     fprintf(stdout,"max_state: %d\n", stm->max_state);
     if(next > stm->max_state) {
@@ -49,63 +49,63 @@ void jump(state_machine *stm, unsigned next, selector_key *key) {
         fprintf(stdout, "if 1 en jump\n");
         if(stm->current != NULL && stm->current->on_departure != NULL) {
             fprintf(stdout, "if 1.1\n");
-            stm->current->on_departure(stm->current->state, key);
+            stm->current->on_departure(stm->current->state, s_key);
         }
         stm->current = stm->states + next;
 
         if(NULL != stm->current->on_arrival) {
             fprintf(stdout, "if 1.2\n");
             fprintf(stdout, "current_state en jump: %d\n", stm->current->state);
-            stm->current->on_arrival(stm->current->state, key);
+            stm->current->on_arrival(stm->current->state, s_key);
         }
     }
 }
 
 unsigned
-stm_handler_read(state_machine *stm, selector_key *key) {
+stm_handler_read(state_machine *stm, selector_key *s_key) {
     fprintf(stdout,"Estoy en stm_handler_read!\n");
-    handle_first(stm, key);
+    handle_first(stm, s_key);
     if(stm->current->on_read_ready == 0) {
         fprintf(stdout,"Abort de stm_handle_read\n");
         abort();
     }
-    const unsigned int ret = stm->current->on_read_ready(key);
+    const unsigned int ret = stm->current->on_read_ready(s_key);
     fprintf(stdout,"Respuesta del on_read_ready: %d\n", ret);
-    jump(stm, ret, key);
+    jump(stm, ret, s_key);
 
     return ret;
 }
 
 unsigned
-stm_handler_write(state_machine *stm, selector_key *key) {
+stm_handler_write(state_machine *stm, selector_key *s_key) {
     fprintf(stdout, "Estoy en stm_handler_write\n");
-    handle_first(stm, key);
+    handle_first(stm, s_key);
     if(stm->current->on_write_ready == 0) {
         fprintf(stdout, "Abort de stm_handler_write\n");
         abort();
     }
-    const unsigned int ret = stm->current->on_write_ready(key);
-    jump(stm, ret, key);
+    const unsigned int ret = stm->current->on_write_ready(s_key);
+    jump(stm, ret, s_key);
 
     return ret;
 }
 
 unsigned
-stm_handler_block(state_machine *stm, selector_key *key) {
-    handle_first(stm, key);
+stm_handler_block(state_machine *stm, selector_key *s_key) {
+    handle_first(stm, s_key);
     if(stm->current->on_block_ready == 0) {
         abort();
     }
-    const unsigned int ret = stm->current->on_block_ready(key);
-    jump(stm, ret, key);
+    const unsigned int ret = stm->current->on_block_ready(s_key);
+    jump(stm, ret, s_key);
 
     return ret;
 }
 
 void
-stm_handler_close(state_machine *stm, selector_key *key) {
+stm_handler_close(state_machine *stm, selector_key *s_key) {
     if(stm->current != NULL && stm->current->on_departure != NULL) {
-        stm->current->on_departure(stm->current->state, key);
+        stm->current->on_departure(stm->current->state, s_key);
     }
 }
 

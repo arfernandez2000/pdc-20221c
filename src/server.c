@@ -47,7 +47,7 @@ int main(const int argc, char **argv) {
     
     parse_args(argc, argv, &args);
 
-    serverHandler.port = htons(8080);
+    serverHandler.port = htons(60178);
 
     close(STDIN_FILENO);
 

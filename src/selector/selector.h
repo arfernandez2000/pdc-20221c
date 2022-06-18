@@ -14,7 +14,7 @@
  * Esconde la implementación final (select(2) / poll(2) / epoll(2) / ..)
  *
  * El usuario registra para un file descriptor especificando:
- *  1. un handler: provee funciones callback que manejarán los eventos de
+ *  1. un handler: provee funciones callback que manejarán los s_keyos de
  *     entrada/salida
  *  2. un interés: que especifica si interesa leer o escribir.
  *
@@ -40,10 +40,24 @@
  *  - iniciar la libreria `selector_init'
  *  - crear un selector: `selector_new'
  *  - registrar un file descriptor: `selector_register_fd'
- *  - esperar algún evento: `selector_iteratate'
+ *  - esperar algún s_keyo: `selector_iteratate'
  *  - destruir los recursos de la librería `selector_close'
  */
 typedef struct fdselector * fd_selector;
+
+/**
+ * Argumento de todas las funciones callback del handler
+ */
+typedef struct selector_key {
+    /** el selector que dispara el s_keyo */
+    fd_selector s;
+    /** el file descriptor en cuestión */
+    int         fd;
+    /** dato provisto por el usuario */
+    void *      data;
+} selector_key;
+
+
 
 /** valores de retorno. */
 typedef enum {
@@ -110,30 +124,18 @@ typedef enum {
 #define INTEREST_OFF(FLAG, MASK)  ( (FLAG) & ~(MASK) )
 
 /**
- * Argumento de todas las funciones callback del handler
- */
-typedef struct  {
-    /** el selector que dispara el evento */
-    fd_selector s;
-    /** el file descriptor en cuestión */
-    int         fd;
-    /** dato provisto por el usuario */
-    void *      data;
-} selector_key;
-
-/**
- * Manejador de los diferentes eventos..
+ * Manejador de los diferentes s_keyos..
  */
 typedef struct fd_handler {
-  void (*handle_read)      (selector_key *key);
-  void (*handle_write)     (selector_key *key);
-  void (*handle_block)     (selector_key *key);
+  void (*handle_read)      (selector_key *s_key);
+  void (*handle_write)     (selector_key *s_key);
+  void (*handle_block)     (selector_key *s_key);
 
   /**
    * llamado cuando se se desregistra el fd
    * Seguramente deba liberar los recusos alocados en data.
    */
-  void (*handle_close)     (selector_key *key);
+  void (*handle_close)     (selector_key *s_key);
 
 } fd_handler;
 
@@ -141,8 +143,8 @@ typedef struct fd_handler {
  * registra en el selector `s' un nuevo file descriptor `fd'.
  *
  * Se especifica un `interest' inicial, y se pasa handler que manejará
- * los diferentes eventos. `data' es un adjunto que se pasa a todos
- * los manejadores de eventos.
+ * los diferentes s_keyos. `data' es un adjunto que se pasa a todos
+ * los manejadores de s_keyos.
  *
  * No se puede registrar dos veces un mismo fd.
  *
@@ -168,11 +170,11 @@ selector_set_interest(fd_selector s, int fd, fd_interest i);
 
 /** permite cambiar los intereses para un file descriptor */
 selector_status
-selector_set_interest_key(selector_key *key, fd_interest i);
+selector_set_interest_key(selector_key *s_key, fd_interest i);
 
 
 /**
- * se bloquea hasta que hay eventos disponible y los despacha.
+ * se bloquea hasta que hay s_keyos disponible y los despacha.
  * Retorna luego de cada iteración, o al llegar al timeout.
  */
 selector_status
