@@ -1,3 +1,6 @@
+#ifndef PRAWTOS_HELLO_PARSER_H
+#define PRAWTOS_HELLO_PARSER_H
+
 #define MAX_LEN 0xFF
 
 // Agregar usuario:
@@ -96,3 +99,4 @@ typedef struct cmd_parser{
     uint8_t remaining;
 } cmd_parser;
 
+#endif
