@@ -49,11 +49,11 @@
              o  GET listar usuarios X'04'
 
    2.2 Respuesta sobre el pedido:
-        +--------+----+-----+--------+--------+
-        | STATUS |CMD | REP | NARGS  |  ARGS  |
-        +--------+----+-----+--------+--------+
-        |    1   | 1  |  1  |1 to 255|variable|
-        +--------|----+-----+--------+--------+
+        +--------+----+--------+--------+
+        | STATUS |CMD | NARGS  |  ARGS  |
+        +--------+----+--------+--------+
+        |    1   | 1  |1 to 255|variable|
+        +--------|----+--------+--------+
 
      Donde:
          o  STATUS estado de la conexion
@@ -67,11 +67,7 @@
              o  GET conexiones historicas X'02'
              o  GET conexiones concurrentes X'03'
              o  GET listar usuarios X'04
-          o  REP    Reply field:
-             o  X'00' succeeded
-             o  X'01' server failure
-             o  X'02' command not supported
-             o  X'03' type not supported
+
           o  NARGS    cantidad de argumentos del campo ARGS
           o  ARGS     argumentos del comando solicitado, 
                       cuyo primer byte corresponde a la longitud del argumento
