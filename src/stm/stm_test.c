@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <check.h>
-#include "selector.h"
+#include "../selector/selector.h"
 #include "stm.h"
 
 enum test_states {
@@ -17,20 +17,20 @@ struct data {
 };
 
 static void
-on_arrival(const unsigned state, selector_key *key) {
-    struct data *d = (struct data *)key->data;
+on_arrival(const unsigned state, selector_key *s_key) {
+    struct data *d = (struct data *)s_key->data;
     d->arrived[state] = true;
 }
 
 static void
-on_departure(const unsigned state,selector_key *key) {
-    struct data *d = (struct data *)key->data;
+on_departure(const unsigned state,selector_key *s_key) {
+    struct data *d = (struct data *)s_key->data;
     d->departed[state] = true;
 }
 
 static unsigned
-on_read_ready(selector_key *key) {
-    struct data *d = (struct data *)key->data;
+on_read_ready(selector_key *s_key) {
+    struct data *d = (struct data *)s_key->data;
     unsigned ret;
 
     if(d->i < C) {
@@ -42,8 +42,8 @@ on_read_ready(selector_key *key) {
 }
 
 static unsigned
-on_write_ready(selector_key *key) {
-    return on_read_ready(key);
+on_write_ready(selector_key *s_key) {
+    return on_read_ready(s_key);
 }
 
 static const struct state_definition statbl[] = {
@@ -79,7 +79,7 @@ START_TEST (test_buffer_misc) {
     struct data data = {
         .i = 0,
     };
-    selector_key  key = {
+    selector_key  s_key = {
         .data = &data,
     };
     stm_init(&stm);
@@ -89,7 +89,7 @@ START_TEST (test_buffer_misc) {
     ck_assert_uint_eq(false,  data.arrived[C]);
     ck_assert_ptr_null(stm.current);
 
-    stm_handler_read(&stm, &key);
+    stm_handler_read(&stm, &s_key);
     ck_assert_uint_eq(B,     stm_state(&stm));
     ck_assert_uint_eq(true,  data.arrived[A]);
     ck_assert_uint_eq(true,  data.arrived[B]);
@@ -98,7 +98,7 @@ START_TEST (test_buffer_misc) {
     ck_assert_uint_eq(false, data.departed[B]);
     ck_assert_uint_eq(false, data.departed[C]);
 
-    stm_handler_write(&stm, &key);
+    stm_handler_write(&stm, &s_key);
     ck_assert_uint_eq(C,     stm_state(&stm));
     ck_assert_uint_eq(true,  data.arrived[A]);
     ck_assert_uint_eq(true,  data.arrived[B]);
@@ -107,7 +107,7 @@ START_TEST (test_buffer_misc) {
     ck_assert_uint_eq(true,  data.departed[B]);
     ck_assert_uint_eq(false, data.departed[C]);
 
-    stm_handler_read(&stm, &key);
+    stm_handler_read(&stm, &s_key);
     ck_assert_uint_eq(C,     stm_state(&stm));
     ck_assert_uint_eq(true,  data.arrived[A]);
     ck_assert_uint_eq(true,  data.arrived[B]);
@@ -116,7 +116,7 @@ START_TEST (test_buffer_misc) {
     ck_assert_uint_eq(true,  data.departed[B]);
     ck_assert_uint_eq(false, data.departed[C]);
 
-    stm_handler_close(&stm, &key);
+    stm_handler_close(&stm, &s_key);
 }
 END_TEST
 

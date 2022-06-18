@@ -1,3 +1,7 @@
+
+#ifndef SOCKS5_H
+#define SOCKS5_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +11,7 @@
 #include <time.h>
 
 #include "../stm/stm.h"
-
-#ifndef SOCKS5_H
-#define SOCKS5_H
+#include "../selector/selector.h"
 
 #define INPUT_BUFFER_SIZE 100
 #define OUTPUT_BUFFER_SIZE 100
