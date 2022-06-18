@@ -13,12 +13,9 @@
 
 
 int main(int argc, char* argv[]){
-    
-    arg_st arguments;
-    parse_args(argc, argv, &arguments);
 
-    char* ip = "127.0.0.1";
-    uint16_t port = 8080;
+    struct socks5args args;
+    parse_args(argc, argv, &args);
 
     struct in_addr ip_addr;
     struct in6_addr ip_addr6;
@@ -27,10 +24,10 @@ int main(int argc, char* argv[]){
     //Hay que conectarse con conexion ipv4. Para eso,
     //primero hay que pasar la informacion de texto
     //a binario con la funcion inet_pton()
-    if(inet_pton(AF_INET, ip, &ip_addr)){
-        file_descriptor = connect_by_ipv4(ip_addr, htons(port));
-    }else if(inet_pton(AF_INET6, ip, &ip_addr6)){
-        file_descriptor = connect_by_ipv6(ip_addr6, htons(port));
+    if(inet_pton(AF_INET, args.mng_addr, &ip_addr)){
+        file_descriptor = connect_by_ipv4(ip_addr, htons(args.mng_port));
+    }else if(inet_pton(AF_INET6, args.mng_addr, &ip_addr6)){
+        file_descriptor = connect_by_ipv6(ip_addr6, htons(args.mng_port));
     }else{
         perror("IP address is invalid");
         exit(1);
@@ -110,75 +107,4 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
         return -1;
     }
     return sock;
-}
-
-void parse_args(int argc, char* argv[], arg_st *arguments) {
-    memset(arguments, 0, sizeof(*arguments));
-    arguments->address = "127.0.0.1";
-    arguments->port = 8080;
-    arguments->sniff = true;
-    int opt;
-
-    while((opt = getopt(argc, argv, ":hl:P:u:Lpv")) != -1) {
-        switch(opt) 
-            { 
-                case 'h':
-                    print_help();
-                    break;
-                case 'l':
-                    // TODO: 
-                    break;
-                case 'N':
-                    arguments->sniff = false;
-                    break; 
-                case 'L':
-                    arguments->address = optarg;
-                    break; 
-                case 'p':
-                    // TODO:
-                    break; 
-                case 'P':
-                    arguments->port = set_port(optarg);
-                    break;
-                case 'u':
-                    set_user(optarg, arguments);
-                    break;
-                case 'v':
-                    print_version_info();
-                    break; 
-            }  
-    }
-}
-
-void print_help() {
-    fprintf(stderr,
-            "Usage: [OPTION]...\n"
-            "\n"
-            "   -h               Imprime la ayuda y termina.\n"
-            "   -L <conf addr>  Dirección donde servirá el servicio de management. Por defecto utiliza loopback.\n"
-            "   -P <conf port>   Puerto entrante conexiones configuracion. Por defecto el valor es 8080\n"
-            "   -a <name>:<pass> Usuario y contraseña de usuario para identificarse ante el servidor. Por defecto se pregunta.\n"
-            "   -v               Imprime información sobre la versión y termina.\n"
-            "\n");
-}
-
-void set_user(char *str, arg_st *arguments) {
-
-}
-
-void print_version_info() {
-
-}
-
-int set_port(char *port) {
-    printf("hsata aca?\n");
-    printf("puerto:%s\n", port);
-    int num = atoi(port);
-    if (num < 1 || num > 65535) {
-        printf("Che le pifiaste hermano\n");
-        exit(1);
-        return -1;
-    }
-    printf("mi puerto es: %d\n", num);
-    return num;
 }
