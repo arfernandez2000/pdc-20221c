@@ -13,12 +13,14 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 0
+#define CANT_OPTIONS 1
 
 static bool done = false;
 static char buff[6] = "%";
 
-static void (*option_func[CANT_OPTIONS])(int fd) = { };
+void transfered_bytes(int fd);
+
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes};
 //transfered_bytes
 //historical_connections
 //concurrent_connections
@@ -84,8 +86,10 @@ int main(int argc, char* argv[]) {
 static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
+
+    fprintf(stdout, "connect_ipv4");
     
-    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_SCTP);
+    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -101,6 +105,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     do {
        answer = connect(sock, (struct sockaddr*) &socket_addr, sizeof(socket_addr));
+       fprintf(stdout, "connect");
     } while(answer == -1 && errno != EINTR);
 
     // En el caso de que se pudo crear la conexion pero se cierra por razones ajenas
@@ -115,7 +120,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in6 socket_addr;
     
-    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_SCTP);
+    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -155,48 +160,48 @@ void first_message(int fd, socks5args *args) {
     
     bool logged_in = false;
     while (!logged_in) {
-        if (args->users->name == 0 || args->users->pass == 0) {
-            printf("Username: ");
-            scanf("%s", name_buffer);
-            printf("Password: ");
-            scanf("%s", password_buffer);
-        }
-        else {
-            strcpy(name_buffer, args->users->name);
-            strcpy(name_buffer, args->users->pass);
-        }
+        // if (args->users->name == 0 || args->users->pass == 0) {
+        //     printf("Username: ");
+        //     scanf("%s", name_buffer);
+        //     printf("Password: ");
+        //     scanf("%s", password_buffer);
+        // }
+        // else {
+        //     strcpy(name_buffer, args->users->name);
+        //     strcpy(name_buffer, args->users->pass);
+        // }
         
-        int name_len = strlen(name_buffer);
-        int password_len = strlen(password_buffer);
+        // int name_len = strlen(name_buffer);
+        // int password_len = strlen(password_buffer);
 
-        uint8_t *message = NULL;
-        message = realloc(message, 3 + name_len + password_len);
-        message[0] = 0x01;
-        message[1] = name_len;
-        strcpy(message+2, name_buffer);
-        message[2+name_len] = password_len;
-        strcpy(message+name_len+3, password_buffer);
+        // uint8_t *message = NULL;
+        // message = realloc(message, 3 + name_len + password_len);
+        // message[0] = 0x01;
+        // message[1] = name_len;
+        // strcpy(message+2, name_buffer);
+        // message[2+name_len] = password_len;
+        // strcpy(message+name_len+3, password_buffer);
 
-        send(fd, message, strlen(message), MSG_NOSIGNAL);
-        uint8_t answer[2];
-        recv(fd, answer, 2, 0);
+        // send(fd, message, strlen(message), MSG_NOSIGNAL);
+        // uint8_t answer[2];
+        // recv(fd, answer, 2, 0);
         
-        // El primer byte de la respuesta se ignora
-        switch(answer[1]) {
-            case 0x00:
-                printf("Successful connection\n");
-                logged_in = true;
-                break;
-            case 0x01:
-                printf("Server failure\n");
-                break;
-            case 0x02:
-                printf("Version not supported\n");
-                break;
-            case 0x03:
-                printf("Incorrect username or password\n");
-                break;
-        }
+        // // El primer byte de la respuesta se ignora
+        // switch(answer[1]) {
+        //     case 0x00:
+        //         printf("Successful connection\n");
+        //         logged_in = true;
+        //         break;
+        //     case 0x01:
+        //         printf("Server failure\n");
+        //         break;
+        //     case 0x02:
+        //         printf("Version not supported\n");
+        //         break;
+        //     case 0x03:
+        //         printf("Incorrect username or password\n");
+        //         break;
+        // }
         logged_in = true;
     }
 }
@@ -221,4 +226,12 @@ void options(int fd){
             option_func[select](fd);
         }
     }
+}
+
+void transfered_bytes(int fd){
+    uint8_t request[2];
+
+    request[0] = 0x00;
+    request[1] = 0x01;
+    send(fd, request, 2, 0);
 }
