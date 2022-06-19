@@ -1,17 +1,12 @@
 #include "prawtos.h"
 #include <stdio.h>
 #include <stdlib.h>
-//#include "../parser/prawtos_get_parser.h"
-//#include "../parser/prawtos_user_parser.h"
 #include <sys/socket.h>
 #include <string.h>
 #include "prawtosutils.h"
 #include "auth_prawtos.h"
 #include "../parser/prawtos_parser.h"
-//#include "type_prawtos.h"
-// #include "get_prawtos.h"
 #include "cmd_prawtos.h"
-// #include "user_prawtos.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -32,24 +27,6 @@ static const struct state_definition prawtos_init_states[]={
         .state = CMD_WRITE,
         .on_write_ready = cmd_write,
     },
-    // {
-    //     .state = GET_READ,
-    //     .on_arrival = get_init,
-    //     .on_read_ready = get_read,
-    // },
-    // {
-    //     .state = GET_WRITE,
-    //     .on_write_ready = get_write,
-    // },
-    // {
-    //     .state = USER_READ,
-    //     .on_arrival = user_init,
-    //     .on_read_ready = user_read,
-    // },
-    // {
-    //     .state = USER_WRITE,
-    //     .on_write_ready = user_write,
-    // },
     {
         .state = DONE,
     },

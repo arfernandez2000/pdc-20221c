@@ -2,11 +2,10 @@
 #define PRAWTOSUTILS_H
 
 #include "../buffer/buffer.h"
-#include "../parser/prawtos_typ_parser.h"
 #include "../stm/stm.h"
 #include <sys/socket.h>
 #include "../parser/auth_parser.h"
-
+#include "cmd_prawtos.h"
 #include "../parser/prawtos_parser.h"
 
 #define BUFFER_SIZE 4096
@@ -17,10 +16,6 @@ enum prawtos_state
     AUTH_WRITE,
     CMD_READ,
     CMD_WRITE,
-    // GET_READ,
-    // GET_WRITE,
-    // USER_READ,
-    // USER_WRITE,
     DONE,
     ERROR,
 };

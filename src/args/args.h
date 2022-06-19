@@ -28,7 +28,10 @@ typedef struct socks5args {
     bool            disectors_enabled;
 
     struct doh      doh;
+
+    int             user_count;
     struct users    users[MAX_USERS];
+    struct users    admin;
 } socks5args;
 
 /**

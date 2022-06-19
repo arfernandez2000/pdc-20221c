@@ -15,6 +15,8 @@
 #include "selector/selector.h"
 #include "socks5/socks5.h"
 #include "prawtos/prawtos.h"
+#include "stadistics/stadistics.h"
+#include "user/user_utils.h"
 
 #define DEFAULT_TIMEOUT 5
 #define SELECTOR_COUNT 1024
@@ -44,6 +46,7 @@ static int generate_socket_ipv6(fd_selector selector);
 void listen_interfaces(fd_selector selector);
 static fd_selector init_selector();
 void prawtos_passive_accept(selector_key* key);
+static void initialize_users();
 
 
 int main(const int argc, char **argv) {
@@ -107,7 +110,6 @@ int main(const int argc, char **argv) {
         .handle_close = NULL, // nada que liberar
     };
 
-    // copiando hasta la linea 241 ncomerci main
     fprintf(stdout, "main server\n");
 
     ss = selector_register(selector, prawtos_fd, &prawtos_handler, OP_READ, NULL);
@@ -117,6 +119,9 @@ int main(const int argc, char **argv) {
             perror("Fallo en el while 1");
         }
     }
+
+    stadistics_init();
+    initialize_users();
 }
 
 static fd_selector init_selector(){
@@ -235,10 +240,18 @@ static int generate_socket(struct sockaddr * addr, socklen_t addr_len){
     return fd;
     
 }
-
 // static int generate_socket_ipv6(fd_selector selector){
 //  
 //      memset(&server_handler.ipv4_handler, '\0', sizeof(server_handler.ipv4_handler));
 // 
 // }
 
+static void initialize_users(){
+    init_user_list();
+    struct users user;
+    for(int i=0; i<args.user_count; i++){
+        user = args.users[i];
+        add_user(list, user.name, sizeof(user.name), user.pass, sizeof(user.pass), false);
+    }
+    add_user(list, args.admin.name, sizeof(args.admin.name), args.admin.pass, sizeof(args.admin.pass), true);
+}
