@@ -14,10 +14,14 @@
 #include "netutils/netutils.h"
 #include "selector/selector.h"
 #include "socks5/socks5.h"
+#include "prawtos/prawtos.h"
 
 #define DEFAULT_TIMEOUT 5
 #define SELECTOR_COUNT 1024
 #define SOCKET_BACKLOG 100
+
+#define MAX_PENDING_CONNECTIONS 500
+
 
 typedef struct server_handler {
     struct in_addr ipv4addr;
@@ -39,6 +43,7 @@ static int generate_socket_ipv4(fd_selector selector);
 static int generate_socket_ipv6(fd_selector selector);
 void listen_interfaces(fd_selector selector);
 static fd_selector init_selector();
+void prawtos_passive_accept(selector_key* key);
 
 
 int main(const int argc, char **argv) {
@@ -47,7 +52,7 @@ int main(const int argc, char **argv) {
     
     parse_args(argc, argv, &args);
 
-    serverHandler.port = htons(60178);
+    serverHandler.port = htons(args.socks_port);
 
     close(STDIN_FILENO);
 
@@ -64,6 +69,48 @@ int main(const int argc, char **argv) {
 
     listen_interfaces(selector);
 
+    int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    fprintf(stdout, "args.mng_addr: %s\n", args.mng_addr);
+    fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
+    struct sockaddr_in prawtos_addr;
+    prawtos_addr.sin_family = AF_INET;
+    inet_pton(AF_INET,args.mng_addr,&prawtos_addr.sin_addr);
+    prawtos_addr.sin_port = htons(args.mng_port);
+
+    setsockopt(prawtos_fd, SOL_SOCKET, SO_REUSEADDR, &(int) {1}, sizeof(int));
+
+    fprintf(stdout, "prawtos_fd: %d\n", prawtos_fd);
+
+    if (bind(prawtos_fd, (struct sockaddr *)&prawtos_addr, sizeof(prawtos_addr)) < 0)
+    {
+        perror("unable to bind configuration socket");
+        return -1;
+    }
+    
+    if (listen(prawtos_fd, MAX_PENDING_CONNECTIONS) < 0)
+    {
+        perror("unable to listen on configuration socket");
+        return -1;
+    }
+
+    if (selector_fd_set_nio(prawtos_fd) == -1)
+    {
+        perror("setting server configuration socket as non-blocking");
+        return -1;
+    }
+
+    fprintf(stdout, "despues de los if\n");
+
+    const struct fd_handler prawtos_handler = {
+        .handle_read = prawtos_passive_accept,
+        .handle_write = NULL,
+        .handle_close = NULL, // nada que liberar
+    };
+
+    // copiando hasta la linea 241 ncomerci main
+    fprintf(stdout, "main server\n");
+
+    ss = selector_register(selector, prawtos_fd, &prawtos_handler, OP_READ, NULL);
     for(;!done;) {
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {
@@ -107,6 +154,8 @@ void listen_interfaces(fd_selector selector) {
 
 static int generate_socket_ipv4(fd_selector selector){
     memset(&serverHandler.ipv4_handler, '\0', sizeof(serverHandler.ipv4_handler));
+
+    fprintf(stdout, "generate_socket_ipv4");
 
     // LLamo a la funcioan que socks5 a ejecutar
     serverHandler.ipv4_handler.handle_read = new_connection_ipv4;
@@ -192,3 +241,4 @@ static int generate_socket(struct sockaddr * addr, socklen_t addr_len){
 //      memset(&server_handler.ipv4_handler, '\0', sizeof(server_handler.ipv4_handler));
 // 
 // }
+

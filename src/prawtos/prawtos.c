@@ -1,75 +1,13 @@
 #include "prawtos.h"
-#include "../buffer/buffer.h"
 #include <stdio.h>
-#include "../parser/auth_parser.h"
+#include <stdlib.h>
 #include "../parser/prawtos_get_parser.h"
 #include "../parser/prawtos_user_parser.h"
-#include "../parser/prawtos_typ_parser.h"
 #include <sys/socket.h>
-#include "../stm/stm.h"
 #include <string.h>
-
-#define BUFFER_SIZE 4096
-
-
-enum prawtos_state
-{
-    AUTH_READ = 0,
-    AUTH_WRITE,
-    TYP_READ,
-    TYP_WRITE,
-    GET_READ,
-    GET_WRITE,
-    USER_READ,
-    USER_WRITE,
-    DONE,
-    ERROR
-};
-
-typedef struct auth_prawtos_st{
-    buffer *read_buff, *write_buff;
-    auth_parser parser;
-    uint8_t ulen;
-    uint8_t uname[MAX_LEN];
-    uint8_t plen;
-    uint8_t passwd[MAX_LEN];
-    uint8_t status;
-} auth_prawtos_st;
-
-typedef struct typ_prawtos_st {
-    buffer *read_buff, *write_buff;
-    typ_parser parser;
-    enum typ_response_status status;
-} typ_prawtos_st;
-
-
-struct prawtos {
-    struct sockaddr_storage client_addr;
-    socklen_t client_addr_len;
-    int client_fd;
-
-    state_machine stm;
-
-    union{
-        auth_prawtos_st auth;
-        typ_prawtos_st typ;
-    } client;
-
-    /** buffers para write y read **/
-    uint8_t raw_buff_a[BUFFER_SIZE], raw_buff_b[BUFFER_SIZE];
-    buffer read_buffer, write_buffer;
-};
-
-static void auth_prawtos_init(const unsigned int st, selector_key * key);
-static unsigned auth_prawtos_read(selector_key * key);
-static unsigned auth_prawtos_write(selector_key *key);
-static unsigned auth_prawtos_process(auth_prawtos_st * state);
-static uint8_t check_credentials(const auth_prawtos_st *state);
-static void type_init(const unsigned int st, selector_key * key);
-static enum typ_response_status check_type(const typ_prawtos_st *state);
-static unsigned type_process(typ_prawtos_st * state);
-static unsigned type_read(selector_key * key);
-static unsigned type_write(selector_key *key);
+#include "prawtosutils.h"
+#include "auth_prawtos.h"
+#include "type_prawtos.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -98,176 +36,95 @@ static const struct state_definition prawtos_init_states[]={
     }
 };
 
-static void auth_prawtos_init(const unsigned int st, selector_key * key){
-    auth_prawtos_st *state = &((struct prawtos *) key->data)->client.auth;
-    state->read_buff = &((struct prawtos *) key->data)->read_buffer;
-    state->write_buff = &((struct prawtos *) key->data)->write_buffer;
-    auth_parser_init(&state->parser);
-    memcpy(state->uname,state->parser.auth->uname, state->parser.auth->ulen);
-    state->ulen = state->parser.auth->ulen;
-    memcpy(state->passwd,state->parser.auth->passwd, state->parser.auth->plen);
-    state->plen = state->parser.auth->plen;
-}
-
-static uint8_t check_credentials(const auth_prawtos_st *state){
-    return AUTH_SUCCESS;
-}
-
-static unsigned auth_prawtos_process(auth_prawtos_st * state){
-    unsigned ret = AUTH_WRITE;
-    uint8_t status = check_credentials(state);
-    if(auth_marshal(state->write_buff,status) == -1){
-        ret = ERROR;
+static struct prawtos * prawtos_arrival(int client_fd){
+    struct prawtos * ret;
+    ret = malloc(sizeof(*ret));
+    if(ret == NULL){
+        return NULL;
     }
-    state->status = status;
+    memset(ret,0x00,sizeof(*ret));
+    ret->client_fd = client_fd;
+    ret->client_addr_len = sizeof(ret->client_addr);
+    ret->stm.states = prawtos_init_states;
+    ret->stm.initial = AUTH_READ;
+    ret->stm.max_state = ERROR;
+    stm_init(&(ret->stm));
+    buffer_init(&ret->read_buffer, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
+    buffer_init(&ret->write_buffer, sizeof(ret->raw_buff_b)/sizeof(((ret->raw_buff_b)[0])), ret->raw_buff_b);
+    
     return ret;
 }
 
-static unsigned auth_prawtos_read(selector_key * key){
-    unsigned ret = AUTH_READ;
-    auth_prawtos_st * state = &((struct prawtos *) key->data)->client.auth;
-    bool error = false;
-    size_t count;
-
-    uint8_t * ptr = buffer_write_ptr(state->read_buff,&count);
-    ssize_t n = recv(key->fd,ptr,count,0);
-    if (n > 0){
-        buffer_write_adv(state->read_buff,n);
-        int st = auth_consume(state->read_buff,&state->parser,&error);
-        if(auth_is_done(st,0)){
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
-            {
-                ret = auth_prawtos_process(state);
-            }
-            else{
-                ret = ERROR;
-            }
+static void prawtos_done(struct selector_key * key){
+    int fd = ((struct prawtos*)key->data)->client_fd;
+    if (fd!= -1){
+        if (SELECTOR_SUCCESS != selector_unregister_fd(key->s, fd))
+        {
+            abort();
         }
-
-    }
-    else{
-        ret = ERROR;
-    }
-    return error ? ERROR : ret;
-}
-
-static unsigned auth_prawtos_write(selector_key *key){
-    auth_prawtos_st * state = &((struct prawtos *) key->data)->client.auth;
-    unsigned ret = AUTH_WRITE;
-    size_t count;
-    uint8_t  * ptr = buffer_read_ptr(state->write_buff,&count);
-    ssize_t n = send(key->fd,ptr,count,MSG_NOSIGNAL);
-    if(state->status != AUTH_SUCCESS){
-        ret = ERROR;
-    }
-    else if (n > 0){
-        buffer_read_adv(state->write_buff,n);
-        if(!buffer_can_read(state->write_buff)){
-            if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                //ret = CMD_READ
-                ret = USER_READ;
-            }
-            else{
-                ret = ERROR;
-            }
-        }
-    }
-    return ret;
-}
-
-static void type_init(const unsigned int st, selector_key * key){
-    typ_prawtos_st *state = &((struct prawtos *) key->data)->client.typ;
-    state->read_buff = &((struct prawtos *) key->data)->read_buffer;
-    state->write_buff = &((struct prawtos *) key->data)->write_buffer;
-    typ_parser_init(&state->parser);
-}
-
-static enum typ_response_status check_type(const typ_prawtos_st *state){
-    switch (state->parser.type) {
-    case 0x00:
-        return cmd_get; 
-    case 0x01:
-        return cmd_user; 
-    default:
-        return cmd_unsupported;
+        close(fd);
     }
 }
 
-static unsigned type_process(typ_prawtos_st * state){
-    unsigned ret = TYP_WRITE;
-    enum typ_response_status status = check_type(state);
-    if(auth_marshal(state->write_buff,status) == -1){
-        ret = ERROR;
+static void prawtos_write(struct selector_key *key){
+    state_machine * stm = &((struct prawtos*)key->data)->stm;
+    const enum prawtos_state st = stm_handler_write(stm, key);
+\
+    if (ERROR == st || DONE == st)
+    {
+        prawtos_done(key);
     }
-    state->status = status;
-    return ret;
 }
 
-static unsigned type_read(selector_key * key){
-    unsigned ret = TYP_READ;
-    typ_prawtos_st * state = &((struct prawtos *) key->data)->client.typ;
-    bool error = false;
-    size_t count;
-
-    uint8_t * ptr = buffer_write_ptr(state->read_buff,&count);
-    ssize_t n = recv(key->fd,ptr,count,0);
-    if (n > 0){
-        buffer_write_adv(state->read_buff,n);
-        int st = typ_consume(state->read_buff,&state->parser,&error);
-        if(typ_is_done(st,0)){
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
-            {
-                ret = type_process(state);
-            }
-            else{
-                ret = ERROR;
-            }
-        }
-
-    }
-    else{
-        ret = ERROR;
-    }
-    return error ? ERROR : ret;
+static void prawtos_read(struct selector_key *key){
+    state_machine *stm = &((struct prawtos*)key->data)->stm;
+    const enum prawtos_state st = stm_handler_read(stm, key);
+    if (ERROR == st || DONE == st){
+        prawtos_done(key);
+    }   
 }
 
-static unsigned type_write(selector_key *key){
-    typ_prawtos_st * state = &((struct prawtos *) key->data)->client.typ;
-    unsigned ret = TYP_WRITE;
-    size_t count;
-    uint8_t  * ptr = buffer_read_ptr(state->write_buff,&count);
-    ssize_t n = send(key->fd,ptr,count,MSG_NOSIGNAL);
-    if(state->status == cmd_unsupported){
-        fprintf(stdout, "Lrpmqmp");
-        ret = ERROR;
+static void prawtos_close(struct selector_key *key){
+    if(key->data != NULL) {
+        free(key->data);
+        key->data = NULL;
     }
-    else if (n > 0){
-        buffer_read_adv(state->write_buff,n);
-        if(!buffer_can_read(state->write_buff)){
-            if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                switch (state->status)
-                {
-                case cmd_get:
-                    fprintf(stdout, "Llegue al get read");
-                    ret = GET_READ;
-                    break;
-                
-                case cmd_user:
-                    fprintf(stdout, "Llegue al user read");
-                    ret = USER_READ;
-                    break;
-                default:
-                    fprintf(stdout, "Lrpmqmp 1");
-                    ret = ERROR;
-                    break;    
-                }
-            }
-            else{
-                fprintf(stdout, "Lrpmqmp 2");
-                ret = ERROR;
-            }
-        }
-    }
-    return ret;
 }
 
+const struct fd_handler prawtos_handler = {
+    .handle_read = prawtos_read,
+    .handle_write = prawtos_write,
+    .handle_close = prawtos_close,
+};
+
+void prawtos_passive_accept(selector_key * key) {
+    fprintf(stdout, "Esoty en prawtos_passive_accept!\n");
+    struct sockaddr_storage client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    struct prawtos *state = NULL;
+    const int client = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+    if (selector_fd_set_nio(client) == -1)
+    {
+        goto error;
+    }
+    state = prawtos_arrival(client);
+    if (state == NULL)
+    {
+        goto error;
+    }
+
+    memcpy(&state->client_addr, &client_addr, client_addr_len);
+    state->client_addr_len = client_addr_len;
+    if (SELECTOR_SUCCESS != selector_register(key->s, client, &prawtos_handler, OP_READ, state))
+    {
+        goto error;
+    }
+    return;
+
+error:
+    if (client != -1)
+    {
+        close(client);
+    }
+    prawtos_close(key);
+}

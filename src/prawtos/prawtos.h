@@ -7,7 +7,7 @@
  * contiene las estructuras que permiten el manejo de los
  * estados de la conexión con el cliente
 **/ 
-void mng_passive_accept(struct selector_key * key);
+void prawtos_passive_accept(struct selector_key * key);
 
 
 #endif

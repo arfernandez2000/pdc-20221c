@@ -44,6 +44,7 @@ void new_connection_ipv4(selector_key *event) {
         fd = accept(event->fd, (struct sockaddr *)&cli_address, &clilen);
     } while (fd < 0 && (errno == EINTR));
 
+    fprintf(stdout, "fd_server: %d\n", fd);
 
     Session * session = initialize_session();  
     if (session == NULL) {

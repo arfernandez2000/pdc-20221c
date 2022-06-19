@@ -13,14 +13,15 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 1
+#define CANT_OPTIONS 2
 
 static bool done = false;
 static char buff[6] = "%";
 
 void transfered_bytes(int fd);
+void add_new_user(int fd);
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, add_new_user};
 //transfered_bytes
 //historical_connections
 //concurrent_connections
@@ -54,6 +55,8 @@ int main(int argc, char* argv[]) {
     //primero hay que pasar la informacion de texto
     //a binario con la funcion inet_pton()
     if(inet_pton(AF_INET, args.mng_addr, &ip_addr)) {
+        fprintf(stdout, "ip_addr: %u\n", ip_addr.s_addr);
+        fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
         file_descriptor = connect_by_ipv4(ip_addr, htons(args.mng_port));
     } else if (inet_pton(AF_INET6, args.mng_addr, &ip_addr6)) {
         file_descriptor = connect_by_ipv6(ip_addr6, htons(args.mng_port));
@@ -87,7 +90,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
 
-    fprintf(stdout, "connect_ipv4");
+    fprintf(stdout, "connect_ipv4\n");
     
     sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
@@ -105,9 +108,10 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     do {
        answer = connect(sock, (struct sockaddr*) &socket_addr, sizeof(socket_addr));
-       fprintf(stdout, "connect");
+       fprintf(stdout, "connect: %d\n", errno);
     } while(answer == -1 && errno != EINTR);
 
+    fprintf(stdout, "answer: %d\n", answer);
     // En el caso de que se pudo crear la conexion pero se cierra por razones ajenas
     if(answer == -1){
         close(sock);
@@ -208,7 +212,7 @@ void first_message(int fd, socks5args *args) {
 
 
 static void print_options() {
-    system("clear");
+    //system("clear");
     printf("GET: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n   4: List all users\n\nSET: \n   5: Add user\n   6: Remove user\n   7: Change user password\n   8: Enable/disable password sniffer\n\n9 - Quit\n\n");
     
 }
@@ -229,9 +233,22 @@ void options(int fd){
 }
 
 void transfered_bytes(int fd){
+    printf("In transfered_bytes:\n");
     uint8_t request[2];
 
     request[0] = 0x00;
     request[1] = 0x01;
     send(fd, request, 2, 0);
+}
+
+void add_new_user(int fd) {
+    char name_buffer[CREDENTIALS_SIZE];
+    char password_buffer[CREDENTIALS_SIZE];
+
+    printf("---- Create user ----\n");
+    printf("Username: ");
+    scanf("%s",name_buffer);
+    printf("Password: ");
+    scanf("%s",password_buffer);
+    printf("\n");
 }
