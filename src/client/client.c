@@ -13,14 +13,14 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 3
+#define CANT_OPTIONS 5
 
 static bool done = false;
 static char buff[6] = "%";
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, create_user, create_admin};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, create_user, create_admin, remove_user, modify_user};
 
 //historical_connections
 //concurrent_connections
@@ -198,15 +198,16 @@ void first_message(int fd, socks5args *args) {
         //         break;
         //     case 0x01:
         //         printf("Server failure\n");
+        //         exit(1);
         //         break;
         //     case 0x02:
         //         printf("Version not supported\n");
+        //         exit(1);
         //         break;
         //     case 0x03:
         //         printf("Incorrect username or password\n");
         //         break;
         // }
-        logged_in = true;
     }
 }
 
@@ -232,13 +233,32 @@ void options(int fd){
     }
 }
 
-void transfered_bytes(int fd){
-    printf("In transfered_bytes:\n");
+void transfered_bytes(int fd) {
+    get_command(fd, 0x01, "\nRetrieving transfered bytes...\n");
+}
+
+void connection_history(int fd) {
+    get_command(fd, 0x02, "\nRetrieving connection history...\n");
+}
+
+void concurrent_connections(int fd) {
+    get_command(fd, 0x03, "\nRetrieving concurrent connections...\n");
+}
+
+void retrieve_users(int fd) {
+    get_command(fd, 0x04, "\nRetrieving users...\n");
+}
+
+void get_command(int fd, uint8_t cmd, char *operation) {
+    printf("\n%s\n", operation);
     uint8_t request[2];
     request[0] = 0x00;
-    request[1] = 0x00;
+    request[1] = cmd;
     send(fd, request, 2, 0);
-    
+
+    // TODO: cambiar size de la respuesta
+    uint8_t answer [1000];
+    get_answer_handler(fd, answer);
 }
 
 void create_user(int fd) {
@@ -279,29 +299,188 @@ void add_new_user(int fd, bool admin) {
 
     send(fd, message, strlen(message), MSG_NOSIGNAL);
 
-    uint8_t answer;
-    recv(fd, &answer, 1, 0);
-    switch (answer) {
+    uint8_t answer[1];
+    user_answer_handler(fd, answer);
+}
+
+void remove_user(int fd) {
+    char name_buffer[CREDENTIALS_SIZE];
+
+    printf("\n---- Delete user ----\n");
+    printf("Username: ");
+    scanf("%s",name_buffer);
+
+    uint8_t *message = NULL;
+    int name_len = strlen(name_buffer);
+
+    message = realloc(message, 3 + name_len);
+    message[0] = 0x01;
+    message[1] = 0x02;
+    message[2] = name_len;
+    strcpy((char *)(message + 3), name_buffer);
+    
+    send(fd, message, strlen(message), MSG_NOSIGNAL);
+
+    uint8_t answer[1];
+    user_answer_handler(fd, answer);
+
+}
+
+void modify_user(int fd) {
+    char name_buffer[CREDENTIALS_SIZE];
+    char password_buffer[CREDENTIALS_SIZE];
+
+    printf("\n---- Modify user ----\n");
+    printf("Username: ");
+    scanf("%s",name_buffer);
+    printf("Password: ");
+    scanf("%s",password_buffer);
+    printf("\n");
+
+    uint8_t *message = NULL;
+    int name_len = strlen(name_buffer);
+    int password_len = strlen(password_buffer);
+    message = realloc(message, 3 + name_len + password_len);
+    message[0] = 0x01;
+    message[1] = 0x01;
+    message[2] = strlen(name_buffer);
+    strcpy((char *)(message + 3), name_buffer);
+    message[4+name_len] = password_len;
+    strcpy((char *)(message + 5 + name_len), password_buffer);
+
+    send(fd, message, strlen(message), MSG_NOSIGNAL);
+
+    uint8_t answer[1];
+    user_answer_handler(fd, answer);
+}
+
+void user_answer_handler(int fd, uint8_t *answer) {
+    recv(fd, answer, 1, 0);
+
+    switch (answer[0]) {
     case 0x00:
-        printf("User created successfully\n");
+        printf("\nOperation successfull\n");
         break;
     case 0x01:
-        printf("Server failure\n");
+        printf("\nServer failure\n");
+        exit(1);
         break;
     case 0x02:
-        printf("Command type not supported\n");
+        printf("\nCommand type not supported\n");
+        exit(1);
         break;
     case 0x03:
-        printf("Command not supported\n");
+        printf("\nCommand not supported\n");
+        exit(1);
         break;
     case 0x04:
-        printf("Error in input length\n");
+        printf("\nError in input length\n");
         break;
     case 0x05:
-        printf("Invalid credentials\n");
+        printf("\nInvalid credentials\n");
         break;
     default:
-        printf("Unknown error\n");
+        printf("\nUnknown error\n");
+        exit(1);
         break;
     }
 }
+
+void get_answer_handler(int fd, uint8_t *answer) {
+    recv(fd, answer, 1000, 0);
+
+    switch (answer[0]) {
+    case 0x00:
+        printf("\nOperation successfull\n");
+        break;
+    case 0x01:
+        printf("\nServer failure\n");
+        exit(1);
+        break;
+    case 0x02:
+        printf("\nCommand type not supported\n");
+        exit(1);
+        break;
+    case 0x03:
+        printf("\nCommand not supported\n");
+        exit(1);
+        break;
+    default:
+        printf("\nUnknown error\n");
+        exit(1);
+        break;
+    }
+
+    // TODO: hay que ver que hacer con el CMD, osea answer[1]
+
+    
+}
+
+
+
+
+
+
+
+// 0-create_user 1-create_admin 2-delete_user 3-modify_user
+// void user_command(int fd, uint8_t command) {
+//     char name_buffer[CREDENTIALS_SIZE];
+//     char password_buffer[CREDENTIALS_SIZE];
+//     uint8_t cmd;
+
+//     switch (command) {
+//     case 0:
+//         printf("\n---- Create user ----\n");
+//         cmd = 0x01;
+//         break;
+//     case 1:
+//         printf("\n---- Create admin ----\n");
+//         cmd = 0x01;
+//         break;
+//     case 2:
+//         printf("\n---- Delete user ----\n");
+//         cmd = 0x02;
+//         break;
+//     case 3:
+//         printf("\n---- Modify user ----\n");
+//         cmd = 0x03;
+//         break;
+//     default:
+//         printf("\nUnknown error\n");
+//         exit(1);
+//         break;
+//     }
+//     printf("Username: ");
+//     scanf("%s",name_buffer);
+//     if (command != 2) {
+//         printf("Password: ");
+//         scanf("%s",password_buffer);
+//         char password_len = strlen(password_buffer);
+//     }
+//     printf("\n");
+
+//     int nbyte = 0;
+//     uint8_t *message = NULL;
+//     int name_len = strlen(name_buffer);
+//     int password_len = strlen(password_buffer);
+//     message = realloc(message, 3 + name_len + password_len);
+//     message[nbyte++] = 0x01;
+//     message[nbyte++] = cmd;
+
+//     if (command == 0 || command == 1) {
+//         message[nbyte++] = (command == 1)? 0x00 : 0x01;
+//     }
+
+//     message[nbyte++] = strlen(name_buffer);
+//     strcpy((char *)(message + nbyte++), name_buffer);
+
+//     if (command != 2) {
+//         message[(nbyte++) + name_len] = password_len;
+//         strcpy((char *)(message + (nbyte++) + name_len), password_buffer);
+//     }
+
+//     send(fd, message, strlen(message), MSG_NOSIGNAL);
+
+//     uint8_t answer[1];
+//     user_answer_handler(fd, answer);
+// }
