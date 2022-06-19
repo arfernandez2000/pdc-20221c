@@ -3,6 +3,7 @@
 #include "../args/args.h"
 #include "../stm/stm_initialize.h"
 #include "socks5utils.h"
+#include "../stadistics/stadistics.h"
 
 static Session* initialize_session();
 
@@ -60,6 +61,7 @@ void new_connection_ipv4(selector_key *event) {
 
     selector_register(event->s, session->client.fd, &client_handler, OP_READ, session);
 
+    stadistics_increase_concurrent();
 }
 
 void new_connection_ipv6(selector_key *event) {
@@ -89,7 +91,8 @@ void new_connection_ipv6(selector_key *event) {
     memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
 
     selector_register(event->s, session->client.fd, &client_handler, OP_READ, session);
-
+    
+    stadistics_increase_concurrent();
 }
 
 static Session* initialize_session() {
@@ -216,6 +219,8 @@ static void close_session(selector_key * event){
     fprintf(stdout, "Estoy en el close_session\n");
     Session * session = (Session *) event->data;
     selector_unregister_fd(event->s, session->client.fd);
+    if(get_concurrent_connections() > 0)
+        stadistics_decrease_concurrent();
     close(session->client.fd);
 
 }
@@ -272,6 +277,5 @@ static void server_write(selector_key * event){
         if(errno!=EINTR){
             close_session(event);
         }
-    }
-    
+    }   
 }

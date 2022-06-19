@@ -5,6 +5,7 @@
 #include "../../stm_initialize.h"
 #include "../../../selector/selector.h"
 #include "../../../buffer/buffer.h"
+#include "../../../stadistics/stadistics.h"
 
 static copy_st *copy_ptr(selector_key *event);
 
@@ -120,6 +121,7 @@ static unsigned int copy_write(selector_key * event){
     }
     else
     {
+        stadistics_increase_bytes_sent(n);
         buffer_read_adv(state->write_buff, n);
     }
     check_interest(event->s, state);
