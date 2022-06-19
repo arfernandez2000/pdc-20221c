@@ -13,15 +13,13 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 2
+#define CANT_OPTIONS 3
 
 static bool done = false;
 static char buff[6] = "%";
 
-void transfered_bytes(int fd);
-void add_new_user(int fd);
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, add_new_user};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, create_user, create_admin};
 //transfered_bytes
 //historical_connections
 //concurrent_connections
@@ -164,48 +162,49 @@ void first_message(int fd, socks5args *args) {
     
     bool logged_in = false;
     while (!logged_in) {
-        // if (args->users->name == 0 || args->users->pass == 0) {
-        //     printf("Username: ");
-        //     scanf("%s", name_buffer);
-        //     printf("Password: ");
-        //     scanf("%s", password_buffer);
-        // }
-        // else {
-        //     strcpy(name_buffer, args->users->name);
-        //     strcpy(name_buffer, args->users->pass);
-        // }
+        if (args->users->name == 0 || args->users->pass == 0) {
+            printf("Username: ");
+            scanf("%s", name_buffer);
+            printf("Password: ");
+            scanf("%s", password_buffer);
+        }
+        else {
+            strcpy(name_buffer, args->users->name);
+            strcpy(name_buffer, args->users->pass);
+        }
         
-        // int name_len = strlen(name_buffer);
-        // int password_len = strlen(password_buffer);
+        int name_len = strlen(name_buffer);
+        int password_len = strlen(password_buffer);
 
-        // uint8_t *message = NULL;
-        // message = realloc(message, 3 + name_len + password_len);
-        // message[0] = 0x01;
-        // message[1] = name_len;
-        // strcpy(message+2, name_buffer);
-        // message[2+name_len] = password_len;
-        // strcpy(message+name_len+3, password_buffer);
+        uint8_t *message = NULL;
 
-        // send(fd, message, strlen(message), MSG_NOSIGNAL);
-        // uint8_t answer[2];
-        // recv(fd, answer, 2, 0);
+        message = realloc(message, 3 + name_len + password_len);
+        message[0] = 0x01;
+        message[1] = name_len;
+        strcpy((char *)(message + 2), name_buffer);
+        message[2+name_len] = password_len;
+        strcpy((char *)(message + name_len + 3), password_buffer);
+
+        send(fd, message, strlen(message), MSG_NOSIGNAL);
+        uint8_t answer[2];
+        recv(fd, answer, 2, 0);
         
-        // // El primer byte de la respuesta se ignora
-        // switch(answer[1]) {
-        //     case 0x00:
-        //         printf("Successful connection\n");
-        //         logged_in = true;
-        //         break;
-        //     case 0x01:
-        //         printf("Server failure\n");
-        //         break;
-        //     case 0x02:
-        //         printf("Version not supported\n");
-        //         break;
-        //     case 0x03:
-        //         printf("Incorrect username or password\n");
-        //         break;
-        // }
+        // El primer byte de la respuesta se ignora
+        switch(answer[1]) {
+            case 0x00:
+                printf("Successful connection\n");
+                logged_in = true;
+                break;
+            case 0x01:
+                printf("Server failure\n");
+                break;
+            case 0x02:
+                printf("Version not supported\n");
+                break;
+            case 0x03:
+                printf("Incorrect username or password\n");
+                break;
+        }
         logged_in = true;
     }
 }
@@ -241,14 +240,67 @@ void transfered_bytes(int fd){
     send(fd, request, 2, 0);
 }
 
-void add_new_user(int fd) {
+void create_user(int fd) {
+    add_new_user(fd, false);
+}
+
+void create_admin(int fd) {
+    add_new_user(fd, true);
+}
+
+void add_new_user(int fd, bool admin) {
+
     char name_buffer[CREDENTIALS_SIZE];
     char password_buffer[CREDENTIALS_SIZE];
 
-    printf("---- Create user ----\n");
+    if (admin) {
+        printf("\n---- Create admin ----\n");
+    } else {
+        printf("\n---- Create user ----\n");
+    }
     printf("Username: ");
     scanf("%s",name_buffer);
     printf("Password: ");
     scanf("%s",password_buffer);
     printf("\n");
+
+    uint8_t *message = NULL;
+    int name_len = strlen(name_buffer);
+    int password_len = strlen(password_buffer);
+    message = realloc(message, 3 + name_len + password_len);
+    message[0] = 0x01;
+    message[1] = 0x01;
+    message[2] = (admin)? 0x00 : 0x01;
+    message[3] = strlen(name_buffer);
+    strcpy((char *)(message + 4), name_buffer);
+    message[5+name_len] = password_len;
+    strcpy((char *)(message + 6 + name_len), password_buffer);
+
+    send(fd, message, strlen(message), MSG_NOSIGNAL);
+
+    uint8_t answer;
+    recv(fd, &answer, 1, 0);
+    switch (answer) {
+    case 0x00:
+        printf("User created successfully\n");
+        break;
+    case 0x01:
+        printf("Server failure\n");
+        break;
+    case 0x02:
+        printf("Command type not supported\n");
+        break;
+    case 0x03:
+        printf("Command not supported\n");
+        break;
+    case 0x04:
+        printf("Error in input length\n");
+        break;
+    case 0x05:
+        printf("Invalid credentials\n");
+        break;
+    default:
+        printf("Unknown error\n");
+        break;
+    }
 }
