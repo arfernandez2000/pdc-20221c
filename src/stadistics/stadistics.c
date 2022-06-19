@@ -7,8 +7,6 @@ void stadistics_init(){
 }
 
 void stadistics_increase_concurrent(){
-    if(stadistics.totalConnections < UINT64_MAX)
-        stadistics.totalConnections++;
     if(stadistics.concurrentConnections < UINT16_MAX)
         stadistics.concurrentConnections++;
 }
@@ -23,8 +21,12 @@ void stadistics_increase_bytes_sent(uint64_t bytes){
         stadistics.bytesSent+=bytes;
 }
 
-void stadistics_increase_bytes_received(uint64_t bytes){
-    if(stadistics.bytesReceived + bytes < UINT64_MAX)
-        stadistics.bytesReceived+=bytes;
+uint16_t get_concurrent_connections(){
+    return stadistics.concurrentConnections;
 }
+
+uint64_t get_bytes_sent(){
+    return stadistics.bytesSent;
+}
+
 

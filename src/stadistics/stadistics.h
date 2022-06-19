@@ -10,11 +10,14 @@ typedef struct Stadistics{
     uint16_t concurrentConnections;
 
     uint64_t bytesSent;
-    uint64_t bytesReceived;
 }Stadistics;
 
 void stadistics_init(void);
+uint16_t get_concurrent_connections();
+uint64_t get_total_connections();
+uint64_t get_bytes_sent();
 void stadistics_increase_concurrent(void);
 void stadistics_decrease_concurrent();
 void stadistics_increase_bytes_sent(uint64_t bytes);
-void stadistics_increase_bytes_received(uint64_t bytes);
+
+#endif
