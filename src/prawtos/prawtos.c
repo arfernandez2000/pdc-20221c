@@ -1,15 +1,17 @@
 #include "prawtos.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "../parser/prawtos_get_parser.h"
-#include "../parser/prawtos_user_parser.h"
+//#include "../parser/prawtos_get_parser.h"
+//#include "../parser/prawtos_user_parser.h"
 #include <sys/socket.h>
 #include <string.h>
 #include "prawtosutils.h"
 #include "auth_prawtos.h"
-#include "type_prawtos.h"
-#include "get_prawtos.h"
-#include "user_prawtos.h"
+#include "../parser/prawtos_parser.h"
+//#include "type_prawtos.h"
+// #include "get_prawtos.h"
+#include "cmd_prawtos.h"
+// #include "user_prawtos.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -22,32 +24,32 @@ static const struct state_definition prawtos_init_states[]={
         .on_write_ready = auth_prawtos_write,
     },
     {
-        .state = TYP_READ,
-        .on_arrival = type_init,
-        .on_read_ready = type_read,
+        .state = CMD_READ,
+        .on_arrival = cmd_init,
+        .on_read_ready = cmd_read,
     },
     {
-        .state = TYP_WRITE,
-        .on_write_ready = type_write,
+        .state = CMD_WRITE,
+        .on_write_ready = cmd_write,
     },
-    {
-        .state = GET_READ,
-        .on_arrival = get_init,
-        .on_read_ready = get_read,
-    },
-    {
-        .state = GET_WRITE,
-        .on_write_ready = get_write,
-    },
-    {
-        .state = USER_READ,
-        .on_arrival = user_init,
-        .on_read_ready = user_read,
-    },
-    {
-        .state = USER_WRITE,
-        .on_write_ready = user_write,
-    },
+    // {
+    //     .state = GET_READ,
+    //     .on_arrival = get_init,
+    //     .on_read_ready = get_read,
+    // },
+    // {
+    //     .state = GET_WRITE,
+    //     .on_write_ready = get_write,
+    // },
+    // {
+    //     .state = USER_READ,
+    //     .on_arrival = user_init,
+    //     .on_read_ready = user_read,
+    // },
+    // {
+    //     .state = USER_WRITE,
+    //     .on_write_ready = user_write,
+    // },
     {
         .state = DONE,
     },
@@ -66,7 +68,7 @@ static struct prawtos * prawtos_arrival(int client_fd){
     ret->client_fd = client_fd;
     ret->client_addr_len = sizeof(ret->client_addr);
     ret->stm.states = prawtos_init_states;
-    ret->stm.initial = TYP_READ;
+    ret->stm.initial = CMD_READ;
     ret->stm.max_state = ERROR;
     stm_init(&(ret->stm));
     buffer_init(&ret->read_buffer, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);

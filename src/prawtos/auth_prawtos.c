@@ -70,8 +70,7 @@ unsigned auth_prawtos_write(selector_key *key){
         buffer_read_adv(state->write_buff,n);
         if(!buffer_can_read(state->write_buff)){
             if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                //ret = CMD_READ
-                ret = USER_READ;
+                ret = CMD_READ;
             }
             else{
                 ret = ERROR;

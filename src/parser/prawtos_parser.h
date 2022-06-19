@@ -1,11 +1,32 @@
-#ifndef PRAWTOS_USER_PARSER_H
-#define PRAWTOS_USER_PARSER_H
+#ifndef PRAWTOS_PARSER_H
+#define PRAWTOS_PARSER_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "../buffer/buffer.h"
 
 #define MAX_LEN 0xFF
+
+/**
+ *2. Obtencion de metricas:
+
+   2.1 Pedido GET:
+                    +----+-----+
+                    |TYP | CMD |
+                    +----+-----+
+                    | 1  |  1  |
+                    +----+-----+
+
+     Donde:
+
+          o  TYP    tipo de comando: X'00' GET
+          o  CMD
+             o  GET bytes transferidos X'01'
+             o  GET conexiones historicas X'02'
+             o  GET conexiones concurrentes X'03'
+             o  GET listar usuarios X'04'
+ * 
+ */
 
 // Agregar usuario:
 //             +------+-------+-----+------+----------+------+----------+
@@ -54,33 +75,42 @@
 //           o  PLEN   contraseña
 
 enum user_cmd{
-    user_create = 0x00 ,
-    user_delete = 0x01 ,
-    user_edit = 0x02,
+    user_create     = 0x00,
+    user_delete     = 0x01,
+    user_edit       = 0x02,
+};
+
+enum get_cmd {
+    get_transfered  = 0x00,
+    get_historical  = 0x01,
+    get_concurrent  = 0x02,
+    get_users       = 0x03,
 };
 
 enum admin {
-    admin = 0x00,
-    user = 0x01,
+    admin   = 0x00,
+    user    = 0x01,
 };
 
-enum user_state {
-    user_type,
-    user_cmd,
-    user_admin,
-    user_ulen,
-    user_uname,
-    user_plen,
-    user_passwd,
+enum prawtos_parser_state {
+    //compartido
+    prawtos_type,
+    prawtos_cmd_get,
+    prawtos_cmd_user,
 
-    // done section
-    user_done,
+    //user
+    prawtos_admin,
+    prawtos_ulen,
+    prawtos_uname,
+    prawtos_plen,
+    prawtos_passwd,
 
-    // error section
-    user_error_unsupported_type,
-    user_error_unsupported_cmd,
-    user_error_unsupported_admin,
-    user_error,
+    prawtos_parser_done,
+
+    prawtos_error,
+    prawtos_error_unsupported_type,
+    prawtos_error_unsupported_cmd,
+    prawtos_error_unsupported_admin,
 };
 
 typedef struct user_st {
@@ -93,37 +123,77 @@ typedef struct user_st {
     
 } user_st;
 
-typedef struct user_parser { 
+typedef struct get {
+    enum get_cmd cmd;
+} get;
 
+typedef struct prawtos_parser {
+
+    get * get;
     user_st * user;
-    enum user_state state;
+    uint8_t type;
+    enum prawtos_parser_state state;
 
     //cuantos bytes tenemos que leer
     uint8_t n;
     //cuantos bytes ya leimos
     uint8_t i;
-
-} user_parser;
+    
+} prawtos_parser;
 
 /** inicializa el parser */
 void
-user_parser_init (user_parser *p);
+prawtos_parser_init (prawtos_parser *p);
 
-/** entreha un byte al parser. Retorna true si se llego al final */
-enum user_state
-user_parser_feed (user_parser *p, const uint8_t c);
+/** entra de a un byte al parser. Retorna true si se llego al final */
+enum prawtos_parser_state
+prawtos_parser_feed (prawtos_parser *p, const uint8_t c);
 
 /** consume los bytes del mensaje del cliente y se los entrega al parser 
  * hasta que se termine de parsear 
 **/
-enum user_state
-user_consume(buffer *b, user_parser *p, bool *errored);
+enum prawtos_parser_state
+prawtos_consume(buffer *b, prawtos_parser *p, bool *errored);
 
 bool
-user_is_done(const enum user_state st, bool *errored);
+prawtos_is_done(const enum prawtos_parser_state st, bool *errored);
 
-void 
-user_close(user_parser *p);
+
+/**
+ *2.2 Respuesta sobre el pedido:
+        +--------+----+--------+--------+
+        | STATUS | CMD| NARGS  |  ARGS  |
+        +--------+----+--------+--------+
+        |    1   | 1  |1 to 255|variable|
+        +--------+----+--------+--------+
+
+     Donde:
+         o  STATUS estado de la conexion
+             o  X'00' operacion exitosa
+             o  X'01' fallo del servidor  
+             o  X'02' tipo de comando no soportado       
+             o  X'03' comando no soportado
+          o  CMD    comando solicitado: 
+             o  GET bytes transferidos X'01'
+             o  GET conexiones historicas X'02'
+             o  GET conexiones concurrentes X'03'
+             o  GET listar usuarios X'04
+          o  NARGS    cantidad de argumentos del campo ARGS
+          o  ARGS     argumentos del comando solicitado, 
+                      cuyo primer byte corresponde a la longitud del argumento
+ */
+
+enum prawtos_response_status {
+    success,
+    server_failure,
+    cmd_not_supported,
+    type_not_supported,
+    user_lens_error,
+    user_credentia,
+};
+
+int 
+get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args);
 
 /**
  * 3.4 Respuesta sobre usuario:
@@ -143,16 +213,8 @@ user_close(user_parser *p);
                o  X'05' error en credenciales de usuario/no existe usuario
  */
 
-enum user_response_status {
-    user_success,
-    user_server_failure,
-    user_cmd_not_supported,
-    user_type_not_supported,
-    user_lens_error,
-    user_credentia,
-};
 
 int 
-user_marshal(buffer *b, const enum user_response_status status);
+user_marshal(buffer *b, const enum prawtos_response_status status);
 
 #endif

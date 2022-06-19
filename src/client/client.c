@@ -163,49 +163,49 @@ void first_message(int fd, socks5args *args) {
     
     bool logged_in = false;
     while (!logged_in) {
-        if (args->users->name == 0 || args->users->pass == 0) {
-            printf("Username: ");
-            scanf("%s", name_buffer);
-            printf("Password: ");
-            scanf("%s", password_buffer);
-        }
-        else {
-            strcpy(name_buffer, args->users->name);
-            strcpy(name_buffer, args->users->pass);
-        }
+        // if (args->users->name == 0 || args->users->pass == 0) {
+        //     printf("Username: ");
+        //     scanf("%s", name_buffer);
+        //     printf("Password: ");
+        //     scanf("%s", password_buffer);
+        // }
+        // else {
+        //     strcpy(name_buffer, args->users->name);
+        //     strcpy(name_buffer, args->users->pass);
+        // }
         
-        int name_len = strlen(name_buffer);
-        int password_len = strlen(password_buffer);
+        // int name_len = strlen(name_buffer);
+        // int password_len = strlen(password_buffer);
 
-        uint8_t *message = NULL;
+        // uint8_t *message = NULL;
 
-        message = realloc(message, 3 + name_len + password_len);
-        message[0] = 0x01;
-        message[1] = name_len;
-        strcpy((char *)(message + 2), name_buffer);
-        message[2+name_len] = password_len;
-        strcpy((char *)(message + name_len + 3), password_buffer);
+        // message = realloc(message, 3 + name_len + password_len);
+        // message[0] = 0x01;
+        // message[1] = name_len;
+        // strcpy((char *)(message + 2), name_buffer);
+        // message[2+name_len] = password_len;
+        // strcpy((char *)(message + name_len + 3), password_buffer);
 
-        send(fd, message, strlen(message), MSG_NOSIGNAL);
-        uint8_t answer[2];
-        recv(fd, answer, 2, 0);
+        // send(fd, message, strlen(message), MSG_NOSIGNAL);
+        // uint8_t answer[2];
+        // recv(fd, answer, 2, 0);
         
-        // El primer byte de la respuesta se ignora
-        switch(answer[1]) {
-            case 0x00:
-                printf("Successful connection\n");
-                logged_in = true;
-                break;
-            case 0x01:
-                printf("Server failure\n");
-                break;
-            case 0x02:
-                printf("Version not supported\n");
-                break;
-            case 0x03:
-                printf("Incorrect username or password\n");
-                break;
-        }
+        // // El primer byte de la respuesta se ignora
+        // switch(answer[1]) {
+        //     case 0x00:
+        //         printf("Successful connection\n");
+        //         logged_in = true;
+        //         break;
+        //     case 0x01:
+        //         printf("Server failure\n");
+        //         break;
+        //     case 0x02:
+        //         printf("Version not supported\n");
+        //         break;
+        //     case 0x03:
+        //         printf("Incorrect username or password\n");
+        //         break;
+        // }
         logged_in = true;
     }
 }
@@ -236,9 +236,9 @@ void transfered_bytes(int fd){
     printf("In transfered_bytes:\n");
     uint8_t request[2];
     request[0] = 0x00;
-    send(fd, request, 1, 0);
-    request[1] = 0x01;
+    request[1] = 0x00;
     send(fd, request, 2, 0);
+    
 }
 
 void create_user(int fd) {
