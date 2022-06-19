@@ -2,7 +2,6 @@
 #define PRAWTOSUTILS_H
 
 #include "../buffer/buffer.h"
-#include "../parser/prawtos_typ_parser.h"
 #include "../stm/stm.h"
 #include <sys/socket.h>
 #include "../parser/auth_parser.h"
