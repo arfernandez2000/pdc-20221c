@@ -6,6 +6,9 @@
 #include "../stm/stm.h"
 #include <sys/socket.h>
 #include "../parser/auth_parser.h"
+#include "../parser/prawtos_get_parser.h"
+#include "../parser/prawtos_user_parser.h"
+
 #define BUFFER_SIZE 4096
 
 enum prawtos_state
@@ -14,12 +17,12 @@ enum prawtos_state
     AUTH_WRITE,
     TYP_READ,
     TYP_WRITE,
-    DONE,
-    ERROR,
     GET_READ,
     GET_WRITE,
     USER_READ,
-    USER_WRITE
+    USER_WRITE,
+    DONE,
+    ERROR,
 };
 
 typedef struct auth_prawtos_st{
@@ -38,6 +41,21 @@ typedef struct typ_prawtos_st {
     enum typ_response_status status;
 } typ_prawtos_st;
 
+typedef struct get_prawtos_st {
+    buffer *read_buff, *write_buff;
+    get_parser parser;
+    get* get;
+    enum get_response_status status;
+    uint8_t * args;
+    uint8_t nargs;
+} get_prawtos_st;
+
+typedef struct user_prawtos_st {
+    buffer *read_buff, *write_buff;
+    user_parser parser;
+    user_st* user;
+    enum user_response_status status;
+} user_prawtos_st;
 
 struct prawtos {
     struct sockaddr_storage client_addr;
@@ -49,11 +67,15 @@ struct prawtos {
     union{
         auth_prawtos_st auth;
         typ_prawtos_st typ;
+        get_prawtos_st get;
+        user_prawtos_st user;
     } client;
 
     /** buffers para write y read **/
     uint8_t raw_buff_a[BUFFER_SIZE], raw_buff_b[BUFFER_SIZE];
     buffer read_buffer, write_buffer;
 };
+
+buffer aux;
 
 #endif

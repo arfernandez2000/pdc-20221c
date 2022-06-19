@@ -5,8 +5,19 @@
 void type_init(const unsigned int st, selector_key * key){
     typ_prawtos_st *state = &((struct prawtos *) key->data)->client.typ;
     state->read_buff = &((struct prawtos *) key->data)->read_buffer;
+    aux = ((struct prawtos *) key->data)->read_buffer;
     state->write_buff = &((struct prawtos *) key->data)->write_buffer;
+    get_prawtos_st * get_state = &((struct prawtos *) key->data)->client.get;
+    get_state->read_buff = &((struct prawtos *) key->data)->read_buffer + 1;
+    get_state->write_buff = &((struct prawtos *) key->data)->write_buffer;
+    get_state->args = NULL;
+    get_state->nargs = 0;
+    user_prawtos_st * user_state = &((struct prawtos *) key->data)->client.user;
+    user_state->read_buff = &((struct prawtos *) key->data)->read_buffer + 1;
+    user_state->write_buff = &((struct prawtos *) key->data)->write_buffer;
     typ_parser_init(&state->parser);
+    get_parser_init(&get_state->parser);
+    user_parser_init(&user_state->parser);
 }
 
 enum typ_response_status check_type(const typ_prawtos_st *state){
@@ -65,7 +76,7 @@ unsigned type_write(selector_key *key) {
     uint8_t  * ptr = buffer_read_ptr(state->write_buff,&count);
     ssize_t n = send(key->fd,ptr,count,MSG_NOSIGNAL);
     if(state->status == cmd_unsupported){
-        fprintf(stdout, "Lrpmqmp");
+        fprintf(stdout, "Lrpmqmp\n");
         ret = ERROR;
     }
     else if (n > 0){
@@ -75,22 +86,22 @@ unsigned type_write(selector_key *key) {
                 switch (state->status)
                 {
                 case cmd_get:
-                    fprintf(stdout, "Llegue al get read");
+                    fprintf(stdout, "Llegue al get read\n");
                     ret = GET_READ;
                     break;
                 
                 case cmd_user:
-                    fprintf(stdout, "Llegue al user read");
+                    fprintf(stdout, "Llegue al user read\n");
                     ret = USER_READ;
                     break;
                 default:
-                    fprintf(stdout, "Lrpmqmp 1");
+                    fprintf(stdout, "Lrpmqmp 1\n");
                     ret = ERROR;
                     break;    
                 }
             }
             else{
-                fprintf(stdout, "Lrpmqmp 2");
+                fprintf(stdout, "Lrpmqmp 2\n");
                 ret = ERROR;
             }
         }

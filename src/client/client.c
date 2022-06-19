@@ -13,15 +13,16 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 2
+#define CANT_OPTIONS 3
 
 static bool done = false;
 static char buff[6] = "%";
 
 void transfered_bytes(int fd);
+void set_user(int fd);
 void add_new_user(int fd);
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, add_new_user};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, add_new_user, set_user};
 //transfered_bytes
 //historical_connections
 //concurrent_connections
@@ -235,8 +236,17 @@ void options(int fd){
 void transfered_bytes(int fd){
     printf("In transfered_bytes:\n");
     uint8_t request[2];
-
     request[0] = 0x00;
+    send(fd, request, 1, 0);
+    request[1] = 0x01;
+    send(fd, request, 2, 0);
+}
+
+void set_user(int fd){
+    printf("In set_user:\n");
+    uint8_t request[2];
+
+    request[0] = 0x01;
     request[1] = 0x01;
     send(fd, request, 2, 0);
 }

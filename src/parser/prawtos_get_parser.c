@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "prawtos_get_parser.h"
 
@@ -20,19 +21,19 @@ remaining_is_done (get_parser *p) {
     return p->i >= p->n;
 }
 
-static enum get_state
-type (const uint8_t c, get_parser *p) {
-    enum get_state next;
-    switch (c) {
-        case 0x00:
-            next = get_cmd;
-            break;
-        default:
-            next = get_error_unsupported_type;
-            break;
-    }
-    return next;
-}
+// static enum get_state
+// type (const uint8_t c, get_parser *p) {
+//     enum get_state next;
+//     switch (c) {
+//         case 0x00:
+//             next = get_cmd;
+//             break;
+//         default:
+//             next = get_error_unsupported_type;
+//             break;
+//     }
+//     return next;
+// }
 
 static enum get_state
 cmd (const uint8_t c, struct get_parser *p){
@@ -48,9 +49,9 @@ get_parser_feed (get_parser *p, const uint8_t c) {
 
     switch (p->state)
     {
-    case get_type:
-        next = type(c, p);
-        break;
+    // case get_type:
+    //     next = type(c, p);
+    //     break;
     case get_cmd:
         next = cmd(c, p);
         break;
@@ -70,8 +71,10 @@ get_parser_feed (get_parser *p, const uint8_t c) {
 
 void 
 get_parser_init(get_parser *p) {
-    p->state = get_type;
-    memset(p->get, 0, sizeof(*(p->get)));
+    fprintf(stdout, "Al principio del get_parser_init\n");
+    p->state = get_cmd;
+    memset(&(p->get), 0, sizeof(*(p->get)));
+    fprintf(stdout, "Despues del memset\n");
 }
 
 bool get_is_done(const enum get_state state, bool *errored)
@@ -96,6 +99,7 @@ bool get_is_done(const enum get_state state, bool *errored)
 
 enum get_state
 get_consume (buffer *b, get_parser *p, bool *errored) {
+    fprintf(stdout, "Estoy en get_consume!\n");
     enum get_state st = p->state;
     bool finished = false;
     while (buffer_can_read(b) && !finished)

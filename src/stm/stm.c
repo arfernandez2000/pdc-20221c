@@ -25,6 +25,7 @@ stm_init(state_machine *stm) {
 
 inline static void
 handle_first(state_machine *stm, selector_key *s_key) {
+    fprintf(stdout,"Estoy en handle_first!\n");
     if(stm->current == NULL) {
         stm->current = stm->states + stm->initial;
         if(NULL != stm->current->on_arrival) {

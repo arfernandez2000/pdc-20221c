@@ -180,7 +180,7 @@ user_parser_feed (user_parser *p, const uint8_t c) {
 void 
 user_parser_init(user_parser *p) {
     p->state = user_type;
-    memset(p->user, 0, sizeof(*(p->user)));
+    memset(&(p->user), 0, sizeof(*(p->user)));
 }
 
 bool user_is_done(const enum user_state state, bool *errored)

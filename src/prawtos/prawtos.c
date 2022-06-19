@@ -8,6 +8,8 @@
 #include "prawtosutils.h"
 #include "auth_prawtos.h"
 #include "type_prawtos.h"
+#include "get_prawtos.h"
+#include "user_prawtos.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -29,6 +31,24 @@ static const struct state_definition prawtos_init_states[]={
         .on_write_ready = type_write,
     },
     {
+        .state = GET_READ,
+        .on_arrival = get_init,
+        .on_read_ready = get_read,
+    },
+    {
+        .state = GET_WRITE,
+        .on_write_ready = get_write,
+    },
+    {
+        .state = USER_READ,
+        .on_arrival = user_init,
+        .on_read_ready = user_read,
+    },
+    {
+        .state = USER_WRITE,
+        .on_write_ready = user_write,
+    },
+    {
         .state = DONE,
     },
     {
@@ -46,11 +66,12 @@ static struct prawtos * prawtos_arrival(int client_fd){
     ret->client_fd = client_fd;
     ret->client_addr_len = sizeof(ret->client_addr);
     ret->stm.states = prawtos_init_states;
-    ret->stm.initial = AUTH_READ;
+    ret->stm.initial = TYP_READ;
     ret->stm.max_state = ERROR;
     stm_init(&(ret->stm));
     buffer_init(&ret->read_buffer, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
     buffer_init(&ret->write_buffer, sizeof(ret->raw_buff_b)/sizeof(((ret->raw_buff_b)[0])), ret->raw_buff_b);
+    buffer_init(&aux, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
     
     return ret;
 }
@@ -69,7 +90,7 @@ static void prawtos_done(struct selector_key * key){
 static void prawtos_write(struct selector_key *key){
     state_machine * stm = &((struct prawtos*)key->data)->stm;
     const enum prawtos_state st = stm_handler_write(stm, key);
-\
+
     if (ERROR == st || DONE == st)
     {
         prawtos_done(key);
