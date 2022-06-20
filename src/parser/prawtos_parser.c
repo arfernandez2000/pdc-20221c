@@ -31,6 +31,12 @@ type (const uint8_t c, prawtos_parser *p) {
         case 0x01:
             next = prawtos_cmd_user;
             break;
+        case 0x02:
+            next = prawtos_cmd_sniff;
+            break;
+        case 0x03:
+            next = prawtos_parser_done;
+            break;
         default:
             next = prawtos_error_unsupported_type;
             break;
@@ -67,6 +73,14 @@ cmd_user(const uint8_t c, struct prawtos_parser *p){
     }
     p->user->cmd = c;
     return next;
+}
+
+static enum prawtos_parser_state
+cmd_sniff(const uint8_t c, struct prawtos_parser *p){
+    if(c >= 2)
+        return prawtos_error_unsupported_cmd;
+    p->get->cmd = c;
+    return prawtos_parser_done;
 }
 
 static enum prawtos_parser_state
@@ -163,6 +177,9 @@ prawtos_parser_feed (prawtos_parser *p, const uint8_t c) {
         break;
     case prawtos_cmd_user:
         next = cmd_user(c, p);
+        break;
+    case prawtos_cmd_sniff:
+        next = cmd_sniff(c, p);
         break;
     case prawtos_admin:
         next = is_admin(c, p);
@@ -271,6 +288,21 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
 
 int 
 user_marshal(buffer *b, const enum prawtos_response_status status){
+    size_t count, len = 1;
+    uint8_t * ptr = buffer_write_ptr(b, &count);
+    
+    if(count < len){
+        return -1;
+    }
+
+    ptr[0] = status;
+    buffer_write_adv(b, len);
+
+    return len;
+}
+
+int 
+quit_marshal(buffer *b, const enum prawtos_response_status status){
     size_t count, len = 1;
     uint8_t * ptr = buffer_write_ptr(b, &count);
     

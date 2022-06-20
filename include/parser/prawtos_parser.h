@@ -74,6 +74,32 @@
 //           o  PLEN   longitud del campo PAWSSWD
 //           o  PLEN   contraseña
 
+/**
+ * 4. Configuracion remota:
+   4.1 Habilitar/deshabilitar el sniffer de contraseñas:
+            +-----+-----+
+            | TYP | CMD |
+            +-----+-----+
+            |  1  |  1  |
+            +-----+-----+
+      Donde:
+
+          o  TYP    tipo de comando: X'02' SNIFF
+          o  CMD  flag para habilitar o deshabilitar el sniffeo de contraseñas
+             o  X'00' habilitar
+             o  X'01' deshabilitar       
+
+5. Cerrar cliente:
+            +-----+
+            | TYP |
+            +-----+
+            |  1  |
+            +-----+
+      Donde:
+          o  TYP    tipo de comando: X'03' QUIT  
+ * 
+ */
+
 enum user_cmd{
     user_create     = 0x00,
     user_delete     = 0x01,
@@ -87,6 +113,11 @@ enum get_cmd {
     get_users       = 0x03,
 };
 
+enum sniff_cmd {
+    sniff_on    = 0x00,
+    sniff_off   = 0x01,
+};
+
 enum admin {
     admin   = 0x00,
     user    = 0x01,
@@ -97,7 +128,7 @@ enum prawtos_parser_state {
     prawtos_type,
     prawtos_cmd_get,
     prawtos_cmd_user,
-
+    prawtos_cmd_sniff,
     //user
     prawtos_admin,
     prawtos_ulen,
@@ -127,10 +158,15 @@ typedef struct get {
     enum get_cmd cmd;
 } get;
 
+typedef struct sniff_st {
+    enum sniff_cmd cmd;
+} sniff_st;
+
 typedef struct prawtos_parser {
 
     get * get;
     user_st * user;
+    sniff_st * sniff;
     uint8_t type;
     enum prawtos_parser_state state;
 
@@ -216,5 +252,8 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
 
 int 
 user_marshal(buffer *b, const enum prawtos_response_status status);
+
+int 
+quit_marshal(buffer *b, const enum prawtos_response_status status);
 
 #endif

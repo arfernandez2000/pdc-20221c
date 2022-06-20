@@ -82,7 +82,7 @@
       Donde:
 
             o  TYP    tipo de comando: X'01' USERS
-            o  CMD    comando solicitado: X'01' CREATE
+            o  CMD    comando solicitado: X'00' CREATE
             o  ADMIN  flag para indicar tipo de usuario
                o  X'00' admin
                o  X'01' user
@@ -100,7 +100,7 @@
       Donde:
 
             o  TYP    tipo de comando: X'01' USERS
-            o  CMD    comando solicitado: X'02' DELETE 
+            o  CMD    comando solicitado: X'01' DELETE 
             o  ULEN   longitud del campo UNAME
             o  UNAME  nombre del usuario
 
@@ -113,7 +113,7 @@
       Donde:
 
             o  TYP    tipo de comando: X'01' USERS
-            o  CMD    comando solicitado: X'03' EDIT
+            o  CMD    comando solicitado: X'02' EDIT
             o  ULEN   longitud del campo UNAME
             o  UNAME  nombre del usuario
             o  PLEN   longitud del campo PAWSSWD
@@ -137,11 +137,11 @@
 
 4. Configuracion remota:
    4.1 Habilitar/deshabilitar el sniffer de contraseñas:
-            +----+-----+
-            |TYP | CMD |
-            +----+-----+
-            | 1  |  1  |
-            +----+-----+
+            +-----+-----+
+            | TYP | CMD |
+            +-----+-----+
+            |  1  |  1  |
+            +-----+-----+
       Donde:
 
           o  TYP    tipo de comando: X'02' SNIFF
@@ -150,10 +150,10 @@
              o  X'01' deshabilitar       
 
 5. Cerrar cliente:
-            +----+
-            |TYP |
-            +----+
-            | 1  |
-            +----+
+            +-----+
+            | TYP |
+            +-----+
+            |  1  |
+            +-----+
       Donde:
           o  TYP    tipo de comando: X'03' QUIT  

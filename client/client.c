@@ -13,7 +13,7 @@
 #include "../include/args.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 8
+#define CANT_OPTIONS 10
 
 static bool done = false;
 static char buff[6] = "%";
@@ -27,6 +27,10 @@ void create_admin(int fd);
 void remove_user(int fd);
 void modify_user(int fd);
 
+void quit(int fd);
+
+void set_sniffer(int fd);
+
 void get_command(int fd, uint8_t cmd, char *operation);
 static int connect_by_ipv4(struct in_addr ip, in_port_t port);
 static int connect_by_ipv6(struct in6_addr ip, in_port_t port);
@@ -39,16 +43,7 @@ void get_answer_handler(int fd, uint8_t *answer);
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user};
-
-//historical_connections
-//concurrent_connections
-//get_users
-//set_user
-//remove_user
-//change_password
-//set_sniffer
-//quit
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, set_sniffer, quit};
 
 
 static void sigterm_handler(const int signal) {
@@ -238,7 +233,7 @@ void first_message(int fd, socks5args *args) {
 
 static void print_options() {
     //system("clear");
-    printf("GET: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n   4: List all users\n\nSET: \n   5: Add user\n   6: Remove user\n   7: Change user password\n   8: Enable/disable password sniffer\n\n9 - Quit\n\n");
+    printf("GET: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n   4: List all users\n\nSET: \n   5: Add user\n   6: Add user admin\n   7: Remove user\n   8: Change user password\n   9: Enable/disable password sniffer\n\n10 - Quit\n\n");
     
 }
 
@@ -389,6 +384,61 @@ void modify_user(int fd) {
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
+}
+
+void quit(int fd) {
+    uint8_t buff[] = {0x03};
+    send(fd, buff, 1, 0);
+
+    int n = recv(fd, buff, 1, 0);
+
+    if(n != 1) {
+        printf("Quit failed successfully\n");
+        exit(1);
+    }
+    printf("Quit success");
+
+    done = true;
+}
+
+void set_sniffer(int fd) {
+
+    char confirm = 0;
+    printf("\nSniffer options: \n\t1: Enable\n\t2: Disable\n");
+    do {
+        confirm = getchar();
+    } while (confirm != '1' && confirm != '2');
+
+    // uint8_t request[2];
+    // request[0] = 0x00;
+    // if(confirm == '1')
+    //     request[1] = 0x00;
+    // else
+    //     request[1] = 0x01;
+    // send(fd, request, 2, 0);
+
+    // int n = recv(fd, request, 1, 0);
+
+    // if(n != 1) {
+    //     printf("recv failed\n");
+    //     exit(1);
+    // }
+
+    // printf("Quit success");
+
+
+
+
+    // resp_status status;
+    // n = get_setter_result(fd, &status);
+
+    // if(n <= 0) {
+    //     exit_error();
+    //     return;
+    // }
+
+    // print_response_status(status);
+
 }
 
 void user_answer_handler(int fd, uint8_t *answer) {

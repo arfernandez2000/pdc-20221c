@@ -124,6 +124,13 @@ static unsigned cmd_process(cmd_prawtos_st * state){
             ret = ERROR_PRAWTOS;
         }
         break;
+    case 0x03:
+        fprintf(stdout, "quitttt!\n");
+        state->status = success;
+        if(quit_marshal(state->write_buff,state->status) == -1){
+            ret = ERROR_PRAWTOS;
+        }
+        break;
     default:
         ret = ERROR_PRAWTOS;
         break;
@@ -179,14 +186,18 @@ unsigned cmd_write(selector_key *key) {
         ret = ERROR_PRAWTOS;
     }
     else if (n > 0){
-        buffer_read_adv(state->write_buff, n);
-        if(!buffer_can_read(state->write_buff)){
-            if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                ret = CMD_READ_PRAWTOS;
-            }
-            else{
-                fprintf(stdout, "Lrpmqmp 1\n");
-                ret = ERROR_PRAWTOS;
+        if(state->parser.type == 0x03){
+            ret = DONE_PRAWTOS;
+        } else {
+            buffer_read_adv(state->write_buff, n);
+            if(!buffer_can_read(state->write_buff)){
+                if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
+                    ret = CMD_READ_PRAWTOS;
+                }
+                else{
+                    fprintf(stdout, "Lrpmqmp 1\n");
+                    ret = ERROR_PRAWTOS;
+                }
             }
         }
     }
