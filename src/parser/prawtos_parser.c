@@ -258,7 +258,7 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
     ptr[2] = nargs;
     buffer_write_adv(b, 3);
 
-    memcpy(ptr + 1, args, args_len);
+    memcpy(ptr + 3, args, args_len);
     buffer_write_adv(b, args_len);
     free(args);
 

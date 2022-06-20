@@ -13,14 +13,14 @@
 #include "client.h"
 
 #define CREDENTIALS_SIZE 255
-#define CANT_OPTIONS 5
+#define CANT_OPTIONS 8
 
 static bool done = false;
 static char buff[6] = "%";
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, create_user, create_admin, remove_user, modify_user};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user};
 
 //historical_connections
 //concurrent_connections
@@ -208,6 +208,7 @@ void first_message(int fd, socks5args *args) {
         //         printf("Incorrect username or password\n");
         //         break;
         // }
+        logged_in = true;
     }
 }
 
@@ -234,19 +235,19 @@ void options(int fd){
 }
 
 void transfered_bytes(int fd) {
-    get_command(fd, 0x01, "\nRetrieving transfered bytes...\n");
+    get_command(fd, 0x00, "\nRetrieving transfered bytes...\n");
 }
 
 void connection_history(int fd) {
-    get_command(fd, 0x02, "\nRetrieving connection history...\n");
+    get_command(fd, 0x01, "\nRetrieving connection history...\n");
 }
 
 void concurrent_connections(int fd) {
-    get_command(fd, 0x03, "\nRetrieving concurrent connections...\n");
+    get_command(fd, 0x02, "\nRetrieving concurrent connections...\n");
 }
 
 void retrieve_users(int fd) {
-    get_command(fd, 0x04, "\nRetrieving users...\n");
+    get_command(fd, 0x03, "\nRetrieving users...\n");
 }
 
 void get_command(int fd, uint8_t cmd, char *operation) {
@@ -297,7 +298,7 @@ void add_new_user(int fd, bool admin) {
     message[5+name_len] = password_len;
     strcpy((char *)(message + 6 + name_len), password_buffer);
 
-    send(fd, message, strlen(message), MSG_NOSIGNAL);
+    send(fd, message, sizeof(message), MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
@@ -319,7 +320,7 @@ void remove_user(int fd) {
     message[2] = name_len;
     strcpy((char *)(message + 3), name_buffer);
     
-    send(fd, message, strlen(message), MSG_NOSIGNAL);
+    send(fd, message, sizeof(message), MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
@@ -348,7 +349,7 @@ void modify_user(int fd) {
     message[4+name_len] = password_len;
     strcpy((char *)(message + 5 + name_len), password_buffer);
 
-    send(fd, message, strlen(message), MSG_NOSIGNAL);
+    send(fd, message, sizeof(message), MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
@@ -411,6 +412,9 @@ void get_answer_handler(int fd, uint8_t *answer) {
         break;
     }
 
+    printf("cmd: %hhu\n", answer[1]);
+    printf("nargs: %hhu\n", answer[2]);
+    printf("args: %hhu\n", answer[3]);
     // TODO: hay que ver que hacer con el CMD, osea answer[1]
 
     

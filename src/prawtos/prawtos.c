@@ -7,6 +7,7 @@
 #include "auth_prawtos.h"
 #include "../parser/prawtos_parser.h"
 #include "cmd_prawtos.h"
+#include "../stadistics/stadistics.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -89,6 +90,9 @@ static void prawtos_close(struct selector_key *key){
         free(key->data);
         key->data = NULL;
     }
+    if(get_concurrent_connections() > 0){
+        stadistics_decrease_concurrent();
+    }
 }
 
 const struct fd_handler prawtos_handler = {
@@ -119,6 +123,7 @@ void prawtos_passive_accept(selector_key * key) {
     {
         goto error;
     }
+    stadistics_increase_concurrent();
     return;
 
 error:

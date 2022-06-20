@@ -157,6 +157,8 @@ unsigned cmd_write(selector_key *key) {
     unsigned ret = CMD_WRITE;
     size_t count;
     uint8_t  * ptr = buffer_read_ptr(state->write_buff, &count);
+    fprintf(stdout, "key->fd: %d\n", key->fd);
+    fprintf(stdout, "ptr: %s\n", ptr);
     ssize_t n = send(key->fd, ptr, count, MSG_NOSIGNAL);
     if(state->status == cmd_not_supported){
         fprintf(stdout, "Lrpmqmp\n");

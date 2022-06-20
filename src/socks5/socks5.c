@@ -273,6 +273,7 @@ static void server_write(selector_key * event){
     
     if(write_bytes = send(event->fd, read, bytes, MSG_NOSIGNAL), write_bytes > 0){
         buffer_read_adv(buffer_write, write_bytes);
+        stadistics_increase_bytes_sent(bytes);
     }
     else{
         if(errno!=EINTR){

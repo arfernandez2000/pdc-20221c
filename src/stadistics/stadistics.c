@@ -9,6 +9,8 @@ void stadistics_init(){
 void stadistics_increase_concurrent(){
     if(stadistics.concurrentConnections < UINT16_MAX)
         stadistics.concurrentConnections++;
+    if(stadistics.totalConnections < UINT16_MAX)
+        stadistics.totalConnections++;
 }
 
 void stadistics_decrease_concurrent(){

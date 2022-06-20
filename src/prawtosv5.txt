@@ -63,10 +63,10 @@
              o  X'03' comando no soportado
 
           o  CMD    comando solicitado: 
-             o  GET bytes transferidos X'01'
-             o  GET conexiones historicas X'02'
-             o  GET conexiones concurrentes X'03'
-             o  GET listar usuarios X'04
+             o  GET bytes transferidos X'00'
+             o  GET conexiones historicas X'01'
+             o  GET conexiones concurrentes X'02'
+             o  GET listar usuarios X'03'
 
           o  NARGS    cantidad de argumentos del campo ARGS
           o  ARGS     argumentos del comando solicitado, 
