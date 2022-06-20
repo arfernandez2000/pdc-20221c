@@ -1,3 +1,4 @@
+
 #include "../../include/auth_prawtos.h"
 #include <string.h>
 #include <sys/socket.h>
@@ -77,4 +78,3 @@ unsigned auth_prawtos_write(selector_key *key){
         }
     }
     return ret;
-}

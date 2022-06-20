@@ -31,6 +31,7 @@ void quit(int fd);
 
 void set_sniffer(int fd);
 
+void welcome();
 void get_command(int fd, uint8_t cmd, char *operation);
 static int connect_by_ipv4(struct in_addr ip, in_port_t port);
 static int connect_by_ipv6(struct in6_addr ip, in_port_t port);
@@ -39,11 +40,21 @@ static void clean_buffer();
 void options(int fd);
 void add_new_user(int fd, bool admin);
 void user_answer_handler(int fd, uint8_t *answer);
-void get_answer_handler(int fd, uint8_t *answer);
+void get_answer_handler(int fd, uint8_t *answer, char **result);
+void get_other_users(int fd, char **result, uint8_t *answer);
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, set_sniffer, quit};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user};
+
+//historical_connections
+//concurrent_connections
+//get_users
+//set_user
+//remove_user
+//change_password
+//set_sniffer
+//quit
 
 
 static void sigterm_handler(const int signal) {
@@ -68,8 +79,8 @@ int main(int argc, char* argv[]) {
     //primero hay que pasar la informacion de texto
     //a binario con la funcion inet_pton()
     if(inet_pton(AF_INET, args.mng_addr, &ip_addr)) {
-        fprintf(stdout, "ip_addr: %u\n", ip_addr.s_addr);
-        fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
+        // fprintf(stdout, "ip_addr: %u\n", ip_addr.s_addr);
+        // fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
         file_descriptor = connect_by_ipv4(ip_addr, htons(args.mng_port));
     } else if (inet_pton(AF_INET6, args.mng_addr, &ip_addr6)) {
         file_descriptor = connect_by_ipv6(ip_addr6, htons(args.mng_port));
@@ -88,26 +99,26 @@ int main(int argc, char* argv[]) {
     // signal(SIGPIPE, sigterm_handler);
 
     clean_buffer();
-
-    printf("File Descriptor: %d\n", file_descriptor);
-
-    printf("algo \n");
     
+    welcome();
 
     first_message(file_descriptor, &args);
-    printf("algo4\n");
     options(file_descriptor);
-    printf("algo2\n");
 
     close(file_descriptor);
     return 0;
+}
+
+void welcome() {
+    printf("\nWelcome to the Prawtos client!\n");
+    printf("Please sign in with your credentials\n");
 }
 
 static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
 
-    fprintf(stdout, "connect_ipv4\n");
+    // fprintf(stdout, "connect_ipv4\n");
     
     sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
@@ -125,10 +136,10 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     do {
        answer = connect(sock, (struct sockaddr*) &socket_addr, sizeof(socket_addr));
-       fprintf(stdout, "connect: %d\n", errno);
+    //    fprintf(stdout, "connect: %d\n", errno);
     } while(answer == -1 && errno != EINTR);
 
-    fprintf(stdout, "answer: %d\n", answer);
+    // fprintf(stdout, "answer: %d\n", answer);
     // En el caso de que se pudo crear la conexion pero se cierra por razones ajenas
     if(answer == -1){
         close(sock);
@@ -211,19 +222,19 @@ void first_message(int fd, socks5args *args) {
         // El primer byte de la respuesta se ignora
         switch(answer[1]) {
             case 0x00:
-                printf("Successful connection\n");
+                printf("\nSuccessful connection\n\n");
                 logged_in = true;
                 break;
             case 0x01:
-                printf("Server failure\n");
+                printf("\nServer failure\n");
                 exit(1);
                 break;
             case 0x02:
-                printf("Version not supported\n");
+                printf("\nVersion not supported\n");
                 exit(1);
                 break;
             case 0x03:
-                printf("Incorrect username or password. Please try again\n");
+                printf("\nIncorrect username or password. Please try again\n");
                 exit(1);
                 break;
         }
@@ -240,13 +251,13 @@ static void print_options() {
 void options(int fd){
     char selected[CREDENTIALS_SIZE];
     int select;
-    printf("done: %d", done);
     while(!done){
         print_options();
         printf("Choose an option:\n");
         scanf(buff, selected);
 
         select = atoi(selected) -1;
+        printf("\n---------------------------------------\n");
         if(select >=0 && select < CANT_OPTIONS && !done){
             option_func[select](fd);
         }
@@ -278,19 +289,50 @@ void get_command(int fd, uint8_t cmd, char *operation) {
 
     // TODO: Arranco esperando 4 bytes y despues veo si necesito recibir mas
     uint8_t answer[1000];
-    recv(fd, answer, 1000, 0);
+    int num = 0;
+    switch (cmd) {
+    case 0x00:
+        num = 8;
+        break;
+    case 0x01:
+        num = 6;
+        break;
+    case 0x02:
+        num = 6;
+        break;
+    case 0x03:
+        num = 4;
+    default:
+        break;
+    }
+    recv(fd, answer, num, 0);
 
     int nargs = answer[2];
 
     char **result = malloc(nargs * sizeof(char *));
-    printf("status: %d\n", answer[0]);
-    printf("cmd: %d\n", answer[1]);
-    printf("nargs: %d\n", answer[2]);
-    printf("args: %s\n", answer + 4);
-    for (int i = 0; i < 20; i++) {
-        printf(" %c ", answer[i]);
+    if (answer[1] == 0x03) {
+        get_other_users(fd, result, answer);
     }
-    // get_answer_handler(fd, answer);
+
+    get_answer_handler(fd, answer, result);
+}
+
+void get_other_users(int fd, char **result, uint8_t *answer) {
+    int nargs = answer[2];
+    int args_len = answer[3];
+    int next[1];
+    for (int i = 0; i < nargs; i++) {
+        result[i] = malloc(args_len);
+        if(result[i] == NULL) {
+            nargs = i - 1;
+            return;
+        }
+        recv(fd, result[i], args_len, 0);
+        printf("mi result vale %s\n", result[i]);
+        // printf("proximo vale %s\n", result[i]);
+        args_len = strlen(result[i]) + 1;
+        printf("mi args_len vale %d\n", args_len);
+    }
 }
 
 void create_user(int fd) {
@@ -357,7 +399,6 @@ void remove_user(int fd) {
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
-
 }
 
 void modify_user(int fd) {
@@ -478,8 +519,7 @@ void user_answer_handler(int fd, uint8_t *answer) {
     }
 }
 
-void get_answer_handler(int fd, uint8_t *answer) {
-    recv(fd, answer, 1000, 0);
+void get_answer_handler(int fd, uint8_t *answer, char **result) {
 
     switch (answer[0]) {
     case 0x00:
@@ -503,20 +543,24 @@ void get_answer_handler(int fd, uint8_t *answer) {
         break;
     }
 
-    printf("cmd: %hhu\n", answer[1]);
-    printf("nargs: %hhu\n", answer[2]);
-    printf("args[0]: %hhu\n", answer[3]);
     unsigned long bytes;
-    if(answer[1] == 0x00)
+    if(answer[1] == 0x00) {
         bytes = (answer[4] << 24) | (answer[5] << 16) | (answer[6] << 8) | answer[7];
-    else if(answer[1] == 0x03){
-        printf("user: %s\n", answer + 4);
-    } else
+        printf("\nBytes transfered: %lu\n", bytes);
+    } else if (answer[1] == 0x01) {
         bytes = (answer[4] << 8) | answer[5];
-    printf("bytes: %lu\n", bytes);
-    // TODO: hay que ver que hacer con el CMD, osea answer[1]
-
-    
+        printf("\nHistorical connections: %lu\n", bytes);
+    } else if (answer[1] == 0x02) {
+        bytes = (answer[4] << 8) | answer[5];
+        printf("\nConcurrent connections: %lu\n", bytes);
+    } else if(answer[1] == 0x03) {
+        printf("\n ---- Users ----\n");
+        printf("%s\n", result[0]);
+        for (int i = 1; i < answer[2]; i++) {
+            printf("%s\n", result[i] + 1);
+        }
+    }
+    putchar('\n');
 }
 
 
@@ -586,4 +630,5 @@ void get_answer_handler(int fd, uint8_t *answer) {
 
 //     uint8_t answer[1];
 //     user_answer_handler(fd, answer);
+>>>>>>> Stashed changes
 // }

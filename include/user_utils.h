@@ -1,3 +1,4 @@
+
 #ifndef USER_UTILS_H
 #define USER_UTILS_H
 #include <stdbool.h>
