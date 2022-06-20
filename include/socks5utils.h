@@ -105,13 +105,19 @@ union server_header {
     copy_st copy;
 };
 
-typedef struct Client{
-    uint8_t authentication;
-    User * user;
-    address_type address;
-    in_port_t port;
-    char * domain;
-} Client;
+typedef struct register_st{
+    uint8_t method;
+    User user_info;
+    enum socks_response_status status;
+    enum socks_addr_type atyp;
+    struct sockaddr_storage client_addr;
+    union socks_addr dest_addr;
+    in_port_t dest_port;
+
+    //Sniffer
+    char *user;
+    char *passwd;
+} register_st;
 
 typedef struct Session {
 
@@ -123,9 +129,12 @@ typedef struct Session {
     Connection client;
     Connection server;
 
-    Client client_information;
+    register_st register_info;
+
     union client_header client_header;
     union server_header server_header;
+
+
 
     time_t lastModified;
 } Session;

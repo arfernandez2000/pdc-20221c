@@ -2,7 +2,7 @@
 #include "../include/buffer.h"
 #include "../include/args.h"
 #include "../include/stm_initialize.h"
-#include "../include/socks5utils.h"
+#include "../include/register.h"
 #include "../include/stadistics.h"
 
 static Session* initialize_session();
