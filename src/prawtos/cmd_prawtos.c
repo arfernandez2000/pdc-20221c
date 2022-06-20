@@ -70,7 +70,8 @@ static int create_user(cmd_prawtos_st *state){
     bool ans = add_user((char*)state->parser.user->uname, state->parser.user->ulen, (char*)state->parser.user->passwd, state->parser.user->plen, false);
     if(ans)
         state->status = success;
-    state->status = user_credentia;
+    else
+        state->status = user_credentia;
     return 1;
 }
 
@@ -78,7 +79,8 @@ static int del_user(cmd_prawtos_st *state){
     bool ans = delete_user((char*)state->parser.user->uname, state->parser.user->ulen);
     if(ans)
         state->status = success;
-    state->status = user_credentia;
+    else
+        state->status = user_credentia;
     return 1;
 }
 
@@ -86,13 +88,14 @@ static int modify_user(cmd_prawtos_st *state){
     bool ans = edit_user((char*) state->parser.user->uname, state->parser.user->ulen, (char*) state->parser.user->passwd,  state->parser.user->plen);
     if(ans)
         state->status = success;
-    state->status = user_credentia;
+    else 
+        state->status = user_credentia;
     return 1;
 }
 
 //static void set_sniffer()
 
-cmd_options user_handlers[] = {del_user, modify_user,create_user};
+cmd_options user_handlers[] = {create_user, del_user, modify_user};
 
 void cmd_init(const unsigned int st, selector_key * key){
     fprintf(stdout, "Estoy en cmd_init!\n");
