@@ -96,9 +96,13 @@ int main(int argc, char* argv[]) {
 
     printf("File Descriptor: %d\n", file_descriptor);
 
-    first_message(file_descriptor, &args);
+    printf("algo \n");
+    
 
+    first_message(file_descriptor, &args);
+    printf("algo4\n");
     options(file_descriptor);
+    printf("algo2\n");
 
     close(file_descriptor);
     return 0;
@@ -177,11 +181,11 @@ static void clean_buffer() {
 
 void first_message(int fd, socks5args *args) {
     
-    char name_buffer[CREDENTIALS_SIZE];
-    char password_buffer[CREDENTIALS_SIZE];
+    // char name_buffer[CREDENTIALS_SIZE];
+    // char password_buffer[CREDENTIALS_SIZE];
     
-    bool logged_in = false;
-    while (!logged_in) {
+    // bool logged_in = false;
+    // while (!logged_in) {
         // if (args->users->name == 0 || args->users->pass == 0) {
         //     printf("Username: ");
         //     scanf("%s", name_buffer);
@@ -227,8 +231,8 @@ void first_message(int fd, socks5args *args) {
         //         printf("Incorrect username or password\n");
         //         break;
         // }
-        logged_in = true;
-    }
+        // logged_in = true;
+    // }
 }
 
 
@@ -241,6 +245,7 @@ static void print_options() {
 void options(int fd){
     char selected[CREDENTIALS_SIZE];
     int select;
+    printf("done: %d", done);
     while(!done){
         print_options();
         printf("Choose an option:\n");
