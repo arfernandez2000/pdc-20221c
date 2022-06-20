@@ -287,7 +287,6 @@ void get_command(int fd, uint8_t cmd, char *operation) {
     request[1] = cmd;
     send(fd, request, 2, 0);
 
-    // TODO: Arranco esperando 4 bytes y despues veo si necesito recibir mas
     uint8_t answer[1000];
     int num = 0;
     switch (cmd) {
@@ -320,18 +319,17 @@ void get_command(int fd, uint8_t cmd, char *operation) {
 void get_other_users(int fd, char **result, uint8_t *answer) {
     int nargs = answer[2];
     int args_len = answer[3];
-    int next[1];
+    int aux = 0;
     for (int i = 0; i < nargs; i++) {
         result[i] = malloc(args_len);
         if(result[i] == NULL) {
-            nargs = i - 1;
+            // nargs = i - 1;
             return;
         }
-        recv(fd, result[i], args_len, 0);
-        printf("mi result vale %s\n", result[i]);
-        // printf("proximo vale %s\n", result[i]);
-        args_len = strlen(result[i]) + 1;
-        printf("mi args_len vale %d\n", args_len);
+        recv(fd, result[i], args_len + 1, 0);
+        aux = args_len;
+        args_len = result[i][args_len];
+        result[i][aux] = '\0';
     }
 }
 
@@ -555,9 +553,8 @@ void get_answer_handler(int fd, uint8_t *answer, char **result) {
         printf("\nConcurrent connections: %lu\n", bytes);
     } else if(answer[1] == 0x03) {
         printf("\n ---- Users ----\n");
-        printf("%s\n", result[0]);
-        for (int i = 1; i < answer[2]; i++) {
-            printf("%s\n", result[i] + 1);
+        for (int i = 0; i < answer[2]; i++) {
+            printf("%s\n", result[i]);
         }
     }
     putchar('\n');
@@ -630,5 +627,4 @@ void get_answer_handler(int fd, uint8_t *answer, char **result) {
 
 //     uint8_t answer[1];
 //     user_answer_handler(fd, answer);
->>>>>>> Stashed changes
 // }
