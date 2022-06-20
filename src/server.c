@@ -112,6 +112,9 @@ int main(const int argc, char **argv) {
 
     fprintf(stdout, "main server\n");
 
+    stadistics_init();
+    initialize_users();
+
     ss = selector_register(selector, prawtos_fd, &prawtos_handler, OP_READ, NULL);
     for(;!done;) {
         ss = selector_select(selector);
@@ -120,8 +123,6 @@ int main(const int argc, char **argv) {
         }
     }
 
-    stadistics_init();
-    initialize_users();
 }
 
 static fd_selector init_selector(){
@@ -249,9 +250,8 @@ static int generate_socket(struct sockaddr * addr, socklen_t addr_len){
 static void initialize_users(){
     init_user_list();
     struct users user;
-    for(int i=0; i<args.user_count; i++){
+    for(int i=0; i < args.user_count; i++){
         user = args.users[i];
-        add_user(list, user.name, sizeof(user.name), user.pass, sizeof(user.pass), false);
+        add_user(user.name, sizeof(user.name), user.pass, sizeof(user.pass), false);
     }
-    add_user(list, args.admin.name, sizeof(args.admin.name), args.admin.pass, sizeof(args.admin.pass), true);
 }

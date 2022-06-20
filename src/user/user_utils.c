@@ -3,42 +3,48 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static user_list * list = NULL;
+
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
+    add_user("admin", 6, "admin", 6, true);
+    printf("AAAA");
 }
 
-static User * add_user_rec(User * first, char* username, uint8_t ulen, char* password, uint8_t upass, bool admin, bool * added) {
+static User * add_user_rec(User * first, char* username, uint8_t ulen, char* password, uint8_t plen, bool admin, bool * added) {
     if(first == NULL){
         User * aux = malloc(sizeof(User));
+        aux->username = malloc(ulen);
+        aux->password = malloc(plen);
         if(aux == NULL){
             perror("Fallo malloc de aux user");
             return first;
         }
-        first->next = first;
-        strcpy(first->username, username);
-        strcpy(first->password, password);
-        first->ulen = ulen;
-        first->upass = upass;
+        aux->next = first;
+        memcpy(aux->username, username, ulen);
+        memcpy(aux->password, password, plen);
+        aux->ulen = ulen;
+        aux->upass = plen;
         *added = true;
         return aux;
-    } else if (strcmp(first->username, username) == 0) {
+    } else if(strcmp(first->username, username) == 0){
         return first;
     } else {
-        first->next = add_user_rec(first->next, username, ulen, password, upass, admin, added);
+        first->next = add_user_rec(first->next, username, ulen, password, plen, admin, added);
     }
     return first;
 }
 
-bool add_user(user_list * list, char* username, uint8_t ulen, char* password, uint8_t upass, bool admin){
+bool add_user(char* username, uint8_t ulen, char* password, uint8_t plen, bool admin){
     bool added = false;
-    list->first = add_user_rec(list->first, username, ulen, password, upass, admin, &added);
+    list->first = add_user_rec(list->first, username, ulen, password, plen, admin, &added);
     if(added)
         list->size++;
     return added;
 }
 
 
-bool delete_user(user_list * list, char* username, uint8_t ulen){
+bool delete_user(char* username, uint8_t ulen){
    User * prev = list->first;
    User * curr = list->first;
 	int c=-1;
@@ -66,7 +72,7 @@ bool delete_user(user_list * list, char* username, uint8_t ulen){
 }
 
 
-bool edit_user(user_list * list, char* username, uint8_t ulen, char* password, uint8_t upass){
+bool edit_user(char* username, uint8_t ulen, char* password, uint8_t upass){
     User * aux = list->first;
     while (aux->next != NULL || (strcmp(aux->username, username) != 0)){
         aux = aux->next;
@@ -79,7 +85,7 @@ bool edit_user(user_list * list, char* username, uint8_t ulen, char* password, u
     return false;
 }
 
-char * get_all_users(user_list * list){
+char * get_all_users(){
     int init = 255;
     char * all_users = malloc(255);
     char * aux;
@@ -104,6 +110,9 @@ char * get_all_users(user_list * list){
     return all_users;
 }
 
+int get_nusers() {
+    return list->size;
+}
 
 // char * get_all_users(user_list * list){
 //     //0x02 0x67 0xff

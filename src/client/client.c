@@ -414,7 +414,15 @@ void get_answer_handler(int fd, uint8_t *answer) {
 
     printf("cmd: %hhu\n", answer[1]);
     printf("nargs: %hhu\n", answer[2]);
-    printf("args: %hhu\n", answer[3]);
+    printf("args[0]: %hhu\n", answer[3]);
+    unsigned long bytes;
+    if(answer[1] == 0x00)
+        bytes = (answer[4] << 24) | (answer[5] << 16) | (answer[6] << 8) | answer[7];
+    else if(answer[1] == 0x03){
+        printf("user: %s\n", answer + 4);
+    } else
+        bytes = (answer[4] << 8) | answer[5];
+    printf("bytes: %lu\n", bytes);
     // TODO: hay que ver que hacer con el CMD, osea answer[1]
 
     
