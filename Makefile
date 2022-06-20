@@ -6,7 +6,7 @@ HFILES=$(shell find $(HEADERS) -name '*.h' | sed 's/^.\///')
 FILES=$(shell find $(SRC) -name '*.c' | sed 's/^.\///')
 OFILES=$(patsubst %.c,./%.o,$(FILES))
 
-CFLAGS = -Wall -Wextra -pedantic -pedantic-errors -O3 -std=c11 -D_POSIX_C_SOURCE=200112L $(MYCFLAGS)
+CFLAGS = -Wall -Wextra -pedantic -pedantic-errors -O3 -std=c11 -D_POSIX_C_SOURCE=200112L -pthread $(MYCFLAGS)
 
 DEBUG_FLAGS = -Wall -Wextra -pedantic -pedantic-errors \
 	-fsanitize=address -g -std=c11 -D_POSIX_C_SOURCE=200112L $(MYCFLAGS)
