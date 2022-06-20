@@ -1,8 +1,8 @@
-#include "stm_initialize.h"
-#include "../socks5/socks5utils.h"
-#include "states/hello/hello.h"
-#include "states/request/request.h"
-#include "states/copy/copy.h"
+#include "../../include/stm_initialize.h"
+#include "../../include/socks5utils.h"
+#include "../../include/hello.h"
+#include "../../include/request.h"
+#include "../../include/copy.h"
 
 static state_definition session_state_def[DONE + 1];
 

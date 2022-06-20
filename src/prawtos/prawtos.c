@@ -1,13 +1,13 @@
-#include "prawtos.h"
+#include "../../include/prawtos.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <string.h>
-#include "prawtosutils.h"
-#include "auth_prawtos.h"
-#include "../parser/prawtos_parser.h"
-#include "cmd_prawtos.h"
-#include "../stadistics/stadistics.h"
+#include "../../include/prawtosutils.h"
+#include "../../include/auth_prawtos.h"
+#include "../../include/parser/prawtos_parser.h"
+#include "../../include/cmd_prawtos.h"
+#include "../../include/stadistics.h"
 
 static const struct state_definition prawtos_init_states[]={
     {
@@ -51,7 +51,6 @@ static struct prawtos * prawtos_arrival(int client_fd){
     stm_init(&(ret->stm));
     buffer_init(&ret->read_buffer, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
     buffer_init(&ret->write_buffer, sizeof(ret->raw_buff_b)/sizeof(((ret->raw_buff_b)[0])), ret->raw_buff_b);
-    buffer_init(&aux, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
     
     return ret;
 }

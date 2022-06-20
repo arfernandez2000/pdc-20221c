@@ -1,8 +1,8 @@
-#include "cmd_prawtos.h"
-#include "../buffer/buffer.h"
-#include "prawtosutils.h"
-#include "../stadistics/stadistics.h"
-#include "../user/user_utils.h"
+#include "../../include/cmd_prawtos.h"
+#include "../../include/buffer.h"
+#include "../../include/prawtosutils.h"
+#include "../../include/stadistics.h"
+#include "../../include/user_utils.h"
 
 typedef void (*cmd_options)(cmd_prawtos_st *state);
 
@@ -11,11 +11,12 @@ static void bytes_sent(cmd_prawtos_st *state){
     int args_len = 5;
     state->args = malloc(args_len * sizeof(uint8_t));
     uint32_t bytes = get_bytes_sent();
-    state->nargs = 1;
-    state->args[0] = bytes >> 24;
-    for(int i = 1; i < args_len;i++){
-        state->args[i] = (bytes >> (8*(6-i))) & 255;
-    }
+    state->nargs = 0x01;
+    state->args[0] = 0x04;
+    state->args[1] = bytes >> 24;
+    state->args[2] = (bytes >> 16) & 255;
+    state->args[3] = (bytes >> 8) & 255;
+    state->args[4] = bytes & 255;
     state->status = success;
 }
 
@@ -24,9 +25,10 @@ static void total_connections(cmd_prawtos_st *state){
     int args_len = 3;
     state->args = malloc(args_len * sizeof(uint8_t));
     uint16_t connections = get_total_connections();
-    state->nargs = 1;
-    state->args[0] = connections >> 8;
-    state->args[1] = connections & 255;
+    state->nargs = 0x01;
+    state->args[0] = 0x02;
+    state->args[1] = connections >> 8;
+    state->args[2] = connections & 255;
     state->status = success;
 }
 
@@ -34,43 +36,44 @@ static void concurrent_connections(cmd_prawtos_st *state){
     int args_len = 3;
     state->args = malloc(args_len * sizeof(uint8_t));
     uint16_t connections = get_concurrent_connections();
-    state->nargs = 1;
-    state->args[0] = connections >> 8;
-    state->args[1] = connections & 255;
+    state->nargs = 0x01;
+    state->args[0] = 0x02;
+    state->args[1] = connections >> 8;
+    state->args[2] = connections & 255;
     state->status = success;
 }
 
 static void get_users_func(cmd_prawtos_st *state){
     size_t nwrite;
-    char * users = get_all_users(list);
+    char * users = get_all_users();
     if(users == NULL){
-        //error
+        perror("error en get_all_user");
+        return;
     }
-    state->nargs = 1;
-    //state->args = malloc(strlen(users) * 2) * sizeof(uint8_t);
-    //state->args[0] = state ->parser.get;
-    //state->args[1] = users;
+    state->nargs = get_nusers();
+    state->args = malloc(strlen(users) * sizeof(uint8_t));
+    memcpy(state->args, (uint8_t *) users, strlen(users));
     state-> status = success;
 }
 
 cmd_options get_handlers[] = {bytes_sent, total_connections, concurrent_connections, get_users_func};
 
 static void create_user(cmd_prawtos_st *state){
-    bool ans = add_user(list, (char*)state->parser.user->uname, state->parser.user->ulen, (char*)state->parser.user->passwd, state->parser.user->plen, false);
+    bool ans = add_user((char*)state->parser.user->uname, state->parser.user->ulen, (char*)state->parser.user->passwd, state->parser.user->plen, false);
     if(ans)
         state->status = success;
     state->status = user_credentia;
 }
 
 static void del_user(cmd_prawtos_st *state){
-    bool ans = delete_user(list, (char*)state->parser.user->uname, state->parser.user->ulen);
+    bool ans = delete_user((char*)state->parser.user->uname, state->parser.user->ulen);
     if(ans)
         state->status = success;
     state->status = user_credentia;
 }
 
 static void modify_user(cmd_prawtos_st *state){
-    bool ans = edit_user(list, (char*) state->parser.user->uname, state->parser.user->ulen, (char*) state->parser.user->passwd,  state->parser.user->plen);
+    bool ans = edit_user((char*) state->parser.user->uname, state->parser.user->ulen, (char*) state->parser.user->passwd,  state->parser.user->plen);
     if(ans)
         state->status = success;
     state->status = user_credentia;

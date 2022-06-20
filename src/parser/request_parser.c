@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "request_parser.h"
+#include "../../include/parser/request_parser.h"
 
 static void 
 remaining_set (struct request_parser *p, const int n){
@@ -20,7 +20,7 @@ remaining_is_done (struct request_parser *p) {
 }
 
 static enum request_state
-version (const uint8_t c, struct request_parser *p) {
+version (const uint8_t c) {
     enum request_state next;
     switch (c) {
         case 0x05:
@@ -40,7 +40,7 @@ cmd (const uint8_t c, struct request_parser *p){
 }
 
 static enum request_state
-rsv (const uint8_t c, struct request_parser *p){
+rsv (){
     return request_atype;
 }
 
@@ -126,13 +126,13 @@ request_parser_feed (struct request_parser *p, const uint8_t c) {
     switch (p->state)
     {
     case request_version:
-        next = version(c, p);
+        next = version(c);
         break;
     case request_cmd:
         next = cmd(c, p);
         break;
     case request_rvs:
-        next = rsv(c, p);
+        next = rsv();
         break;
     case request_atype:
         next = atype(c, p);

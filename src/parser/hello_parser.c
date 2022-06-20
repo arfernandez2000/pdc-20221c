@@ -1,4 +1,4 @@
-#include "hello_parser.h"
+#include "../../include/parser/hello_parser.h"
 
 void hello_parser_init(struct hello_parser *p)
 {
@@ -118,6 +118,6 @@ extern const char * hello_error(const struct hello_parser *p){
     return ret;
 }
 
-void hello_parser_close(struct hello_parser *p){
+void hello_parser_close(){
     // no hay nada que liberar
 }

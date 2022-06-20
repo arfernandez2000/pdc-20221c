@@ -5,6 +5,26 @@
         "*.y": "yaml",
         "selector.h": "c",
         "netutils.h": "c",
-        "args.h": "c"
+        "args.h": "c",
+        "parser_utils.h": "c",
+        "parser.h": "c",
+        "stm_initialize.h": "c",
+        "stm.h": "c",
+        "buffer.h": "c",
+        "cctype": "c",
+        "climits": "c",
+        "cmath": "c",
+        "compare": "c",
+        "concepts": "c",
+        "cstdarg": "c",
+        "cstdio": "c",
+        "cstdlib": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "new": "c",
+        "*.tcc": "c",
+        "cstdbool": "c",
+        "cstdint": "c",
+        "typeinfo": "c"
     }
 }

@@ -1,4 +1,4 @@
-#include "auth_prawtos.h"
+#include "../../include/auth_prawtos.h"
 #include <string.h>
 #include <sys/socket.h>
 

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "auth_parser.h"
+#include "../../include/parser/auth_parser.h"
 
 void auth_parser_init (auth_parser *p)
 {
@@ -26,8 +26,7 @@ static int remaining_is_done(auth_parser *p) {
     return p->i >= p->n;
 }
 
-static enum auth_state
-version (const uint8_t c, auth_parser *p) {
+static enum auth_state version (const uint8_t c) {
     enum auth_state next;
     switch (c) {
         case 0x01:
@@ -102,7 +101,7 @@ enum auth_state auth_parser_feed(auth_parser *p, uint8_t c) {
     switch (p->state)
     {
     case auth_version:
-        next = version(c, p);
+        next = version(c);
         break;
     case auth_ulen:
         next = ulen(c, p);

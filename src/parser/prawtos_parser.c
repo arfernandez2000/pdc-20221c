@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "prawtos_parser.h"
+#include "../../include/parser/prawtos_parser.h"
 
 static void 
 remaining_set (prawtos_parser *p, const int n){
