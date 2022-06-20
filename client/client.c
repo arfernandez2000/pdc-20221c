@@ -228,7 +228,8 @@ void first_message(int fd, socks5args *args) {
                 exit(1);
                 break;
             case 0x03:
-                printf("Incorrect username or password\n");
+                printf("Incorrect username or password. Please try again\n");
+                exit(1);
                 break;
         }
     }

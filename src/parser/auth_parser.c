@@ -176,7 +176,7 @@ auth_marshal(buffer *b, const uint8_t status) {
         return -1;
     }
     buff[0] = 0x01;
-    buff[2] = status;
+    buff[1] = status;
    
     buffer_write_adv(b, len);
     return len; 

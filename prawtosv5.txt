@@ -147,4 +147,13 @@
           o  TYP    tipo de comando: X'02' SNIFF
           o  CMD  flag para habilitar o deshabilitar el sniffeo de contraseñas
              o  X'00' habilitar
-             o  X'01' deshabilitar          
+             o  X'01' deshabilitar       
+
+5. Cerrar cliente:
+            +----+
+            |TYP |
+            +----+
+            | 1  |
+            +----+
+      Donde:
+          o  TYP    tipo de comando: X'03' QUIT  

@@ -115,7 +115,17 @@ char * get_all_users(size_t *nwrite){
 
 int get_nusers() {
     return list->size;
- }
+}
+
+int user_check_credentials(char* uname, char* passwd){
+    User * current = list->first;
+    while (current != NULL) {
+        if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0)
+            return 0;
+        current = current->next;
+    }
+    return 1;   
+}
 
 
 // char * get_all_users(user_list * list){

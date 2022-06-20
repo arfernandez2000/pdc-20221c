@@ -6,6 +6,7 @@
 
 #define MAX_LEN 0xFF
 #define AUTH_SUCCESS 0x00
+#define AUTH_BAD_CREDENTIALS 0X03
 
 /**
  * This begins with the client producing a

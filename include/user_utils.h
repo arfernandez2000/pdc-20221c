@@ -24,6 +24,7 @@ bool delete_user(char* username, uint8_t ulen);
 bool edit_user(char* username, uint8_t ulen, char* pass, uint8_t upass);
 char * get_all_users(size_t *len);
 int get_nusers();
+int user_check_credentials(char* uname, char* passwd);
 
 #endif
 

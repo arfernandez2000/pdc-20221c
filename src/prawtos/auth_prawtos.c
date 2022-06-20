@@ -13,7 +13,9 @@ void auth_prawtos_init(const unsigned int st, selector_key * key){
 }
 
 uint8_t check_credentials(const auth_st *state){
-    return AUTH_SUCCESS;
+    if(user_check_credentials(state->auth.uname, state->auth.passwd) == 0)
+        return AUTH_SUCCESS;
+    return AUTH_BAD_CREDENTIALS;
 }
 
 unsigned auth_prawtos_process(auth_st * state){
