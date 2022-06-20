@@ -247,9 +247,9 @@ int
 get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args){
     size_t args_len =  sizeof(args);
     size_t count, len = 3 + args_len;
-    uint8_t * ptr = buffer_write_ptr(b, &count);
-    
-    if(count < len){
+    uint8_t * ptr =  buffer_write_ptr(b, &count);
+
+    if(count < args[0] + 1){
         return -1;
     }
 
@@ -258,9 +258,10 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
     ptr[2] = nargs;
     buffer_write_adv(b, 3);
 
-    memcpy(ptr + 3, args, args_len);
-    buffer_write_adv(b, args_len);
-    free(args);
+
+    memcpy(ptr + 3, args, args[0]+1);
+
+    buffer_write_adv(b, args[0]+1);
 
     return len;
 }
