@@ -45,7 +45,7 @@ void get_other_users(int fd, char **result, uint8_t *answer);
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, quit, quit};
 
 //historical_connections
 //concurrent_connections
@@ -370,7 +370,6 @@ void add_new_user(int fd, bool admin) {
     strcpy((char *)(message + 4), name_buffer);
     message[4 + name_len + 1] = password_len + 1;
     strcpy((char *)(message + name_len + 6), password_buffer);
-
     send(fd, message, 7 + name_len + password_len, MSG_NOSIGNAL);
 
     uint8_t answer[1];
@@ -433,14 +432,13 @@ void modify_user(int fd) {
 void quit(int fd) {
     uint8_t buff[] = {0x03};
     send(fd, buff, 1, 0);
-
     int n = recv(fd, buff, 1, 0);
 
     if(n != 1) {
         printf("Quit failed successfully\n");
         exit(1);
     }
-    printf("Quit success");
+    printf("Quit success\n");
 
     done = true;
 }
