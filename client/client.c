@@ -45,7 +45,7 @@ void get_other_users(int fd, char **result, uint8_t *answer);
 
 
 
-static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, quit, quit};
+static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, set_sniffer, quit};
 
 //historical_connections
 //concurrent_connections
