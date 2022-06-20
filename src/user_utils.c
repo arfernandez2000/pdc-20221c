@@ -7,7 +7,9 @@ static user_list * list = NULL;
 
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
-    add_user("admin", 6, "admin", 6, true);
+    add_user("admin2", 7, "alggo2", 7, true);
+    add_user("admin", 6, "alggo", 6, true);
+    add_user("pruebita", 9, "pruebita", 9, true);
 }
 
 static User * add_user_rec(User * first, char* username, uint8_t ulen, char* password, uint8_t plen, bool admin, bool * added) {
@@ -84,7 +86,7 @@ bool edit_user(char* username, uint8_t ulen, char* password, uint8_t upass){
     return false;
 }
 
-char * get_all_users(){
+char * get_all_users(size_t *nwrite){
     int init = 255;
     char * all_users = malloc(255);
     char * aux;
@@ -105,7 +107,9 @@ char * get_all_users(){
             }
             all_users = aux;
         }
+        user = user->next;
     }
+    *nwrite = cont;
     return all_users;
 }
 

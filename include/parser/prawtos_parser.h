@@ -193,7 +193,7 @@ enum prawtos_response_status {
 };
 
 int 
-get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args);
+get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args, int args_len);
 
 /**
  * 3.4 Respuesta sobre usuario:

@@ -280,9 +280,21 @@ void get_command(int fd, uint8_t cmd, char *operation) {
     request[1] = cmd;
     send(fd, request, 2, 0);
 
-    // TODO: cambiar size de la respuesta
-    uint8_t answer [1000];
-    get_answer_handler(fd, answer);
+    // TODO: Arranco esperando 4 bytes y despues veo si necesito recibir mas
+    uint8_t answer[1000];
+    recv(fd, answer, 1000, 0);
+
+    int nargs = answer[2];
+
+    char **result = malloc(nargs * sizeof(char *));
+    printf("status: %d\n", answer[0]);
+    printf("cmd: %d\n", answer[1]);
+    printf("nargs: %d\n", answer[2]);
+    printf("args: %s\n", answer + 4);
+    for (int i = 0; i < 20; i++) {
+        printf(" %c ", answer[i]);
+    }
+    // get_answer_handler(fd, answer);
 }
 
 void create_user(int fd) {

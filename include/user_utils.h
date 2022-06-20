@@ -22,7 +22,7 @@ void init_user_list();
 bool add_user(char* username, uint8_t ulen, char* pass, uint8_t upass, bool admin);
 bool delete_user(char* username, uint8_t ulen);
 bool edit_user(char* username, uint8_t ulen, char* pass, uint8_t upass);
-char * get_all_users();
+char * get_all_users(size_t *len);
 int get_nusers();
 
 #endif

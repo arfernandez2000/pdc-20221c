@@ -244,8 +244,9 @@ prawtos_consume (buffer *b, prawtos_parser *p, bool *errored) {
 }
 
 int 
-get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args){
-    size_t args_len =  sizeof(args);
+get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args, int args_len){
+    printf("args en 0+1:%d\n", args[0]+1);
+    printf("argslen: %d\n", args_len);
     size_t count, len = 3 + args_len;
     uint8_t * ptr =  buffer_write_ptr(b, &count);
 
@@ -259,9 +260,11 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
     buffer_write_adv(b, 3);
 
 
-    memcpy(ptr + 3, args, args[0]+1);
+    // memcpy(ptr + 3, args, args[0]+1);
+    memcpy(ptr + 3, args, args_len);
 
-    buffer_write_adv(b, args[0]+1);
+    // buffer_write_adv(b, args[0]+1);
+    buffer_write_adv(b, args_len);
 
     return len;
 }
