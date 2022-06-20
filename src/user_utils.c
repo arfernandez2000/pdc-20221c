@@ -7,6 +7,7 @@ static user_list * list = NULL;
 
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
+    fprintf(stdout, "AAAAAAAAAAa\n\n\n\n\n");
     add_user("admin2", 7, "alggo2", 7, true);
     add_user("admin", 6, "alggo", 6, true);
     add_user("pruebita", 9, "pruebita", 9, true);
@@ -26,6 +27,7 @@ static User * add_user_rec(User * first, char* username, uint8_t ulen, char* pas
         memcpy(aux->password, password, plen);
         aux->ulen = ulen;
         aux->upass = plen;
+        aux->is_admin = admin;
         *added = true;
         return aux;
     } else if (strcmp(first->username, username) == 0) {
@@ -48,17 +50,20 @@ bool add_user(char* username, uint8_t ulen, char* password, uint8_t plen, bool a
 bool delete_user(char* username, uint8_t ulen){
    User * prev = list->first;
    User * curr = list->first;
-	int c=-1;
+	int c = -1;
      // Avanzamos hasta encontrar el elemento a borrar o detectar que no esta
-	while( curr != NULL && c < 0) {
+	while( curr != NULL && c != 0) {
+        fprintf(stdout, "while!\n");
+        fprintf(stdout, "current_uname: %s!\n", curr->username);
+        fprintf(stdout, "uname: %s!\n", username);
 		c = strcmp(curr->username, username);
-		if ( c < 0 && curr->ulen != ulen) {
+		if ( c != 0) {
 			prev = curr;
 			curr = curr->next;
 		}
 	}
 	// curr apunta al elemento encontrado, al primero que es mayor a element o a NULL
-	if (c!=0) {
+	if (c != 0) {
 		return false;	// no estaba
 	}
 	User * aux = curr->next;
@@ -74,19 +79,30 @@ bool delete_user(char* username, uint8_t ulen){
 
 
 bool edit_user(char* username, uint8_t ulen, char* password, uint8_t upass){
-    User * aux = list->first;
-    while (aux->next != NULL || (strcmp(aux->username, username) != 0)){
-        aux = aux->next;
+    User * curr = list->first;
+    int c = -1;
+    while( curr != NULL && c != 0) {
+		c = strcmp(curr->username, username);
+		if (c != 0) {
+			curr = curr->next;
+		}
+	}
+
+    if(c != 0) {
+        return false;
     }
-    if(strcmp(aux->username, username) == 0){
-        aux->password = password;
-        aux->upass = upass;
+
+    if(strcmp(curr->username, username) == 0){
+        curr->password = realloc(curr->password, upass);
+        strcpy(curr->password, password);
+        curr->upass = upass;
         return true;
     }
+
     return false;
 }
 
-char * get_all_users(size_t *nwrite){
+char * get_all_users(int *nwrite){
     int init = 255;
     char * all_users = malloc(255);
     char * aux;
@@ -96,10 +112,7 @@ char * get_all_users(size_t *nwrite){
     User *user = list->first;
     int cont = 0;
     for (int k = 0; k < list->size; ++k){
-        all_users[cont++] = user->ulen;
-        strcpy(all_users+cont,user->username);
-        cont += user->ulen;
-        if(cont >= init){
+        if(cont >= init || cont + user->ulen >= init){
             init *= 2;
             if ((aux = realloc(all_users,init)) == NULL){
                 free(all_users);
@@ -107,6 +120,9 @@ char * get_all_users(size_t *nwrite){
             }
             all_users = aux;
         }
+        all_users[cont++] = user->ulen;
+        strcpy(all_users + cont, user->username);
+        cont += user->ulen;
         user = user->next;
     }
     *nwrite = cont;
@@ -119,9 +135,17 @@ int get_nusers() {
 
 int user_check_credentials(char* uname, char* passwd){
     User * current = list->first;
+    printf("uname %s\n", uname);
+    printf("passwd %d\n", passwd);
+
     while (current != NULL) {
-        if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0)
+        printf("Is admin? %d\n", current->is_admin);
+        printf("name %s\n", current->username);
+        printf("pass %d\n", current->password);
+        if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0 && current->is_admin == true){
+            printf("SOY ADMIN\n\n");
             return 0;
+        }
         current = current->next;
     }
     return 1;   

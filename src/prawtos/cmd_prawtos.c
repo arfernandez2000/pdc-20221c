@@ -47,7 +47,8 @@ static int concurrent_connections(cmd_prawtos_st *state){
 }
 
 static int get_users_func(cmd_prawtos_st *state){
-    size_t nwrite = 0;
+    fprintf(stdout, "Estoy en get_user_func!\n");
+    int nwrite = 0;
     char * users = get_all_users(&nwrite);
     if(users == NULL){
         perror("error en get_all_user");
@@ -67,7 +68,7 @@ static int get_users_func(cmd_prawtos_st *state){
 cmd_options get_handlers[] = {bytes_sent, total_connections, concurrent_connections, get_users_func};
 
 static int create_user(cmd_prawtos_st *state){
-    bool ans = add_user((char*)state->parser.user->uname, state->parser.user->ulen, (char*)state->parser.user->passwd, state->parser.user->plen, false);
+    bool ans = add_user((char*)state->parser.user->uname, state->parser.user->ulen, (char*)state->parser.user->passwd, state->parser.user->plen, state->parser.user->admin);
     if(ans)
         state->status = success;
     else
@@ -76,6 +77,7 @@ static int create_user(cmd_prawtos_st *state){
 }
 
 static int del_user(cmd_prawtos_st *state){
+    fprintf(stdout, "Estoy en del_user!\n");
     bool ans = delete_user((char*)state->parser.user->uname, state->parser.user->ulen);
     if(ans)
         state->status = success;

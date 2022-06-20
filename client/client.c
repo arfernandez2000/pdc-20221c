@@ -317,19 +317,21 @@ void add_new_user(int fd, bool admin) {
     scanf("%s",password_buffer);
     printf("\n");
 
-    uint8_t *message = NULL;
     int name_len = strlen(name_buffer);
     int password_len = strlen(password_buffer);
-    message = realloc(message, 3 + name_len + password_len);
-    message[0] = 0x01;
-    message[1] = 0x01;
-    message[2] = (admin)? 0x00 : 0x01;
-    message[3] = strlen(name_buffer);
-    strcpy((char *)(message + 4), name_buffer);
-    message[5+name_len] = password_len;
-    strcpy((char *)(message + 6 + name_len), password_buffer);
 
-    send(fd, message, sizeof(message), MSG_NOSIGNAL);
+    uint8_t *message = NULL;
+
+    message = realloc(message, 7 + name_len + password_len);
+    message[0] = 0x01;
+    message[1] = 0x00;
+    message[2] = (admin)? 0x01 : 0x00;
+    message[3] = name_len + 1;
+    strcpy((char *)(message + 4), name_buffer);
+    message[4 + name_len + 1] = password_len + 1;
+    strcpy((char *)(message + name_len + 6), password_buffer);
+
+    send(fd, message, 7 + name_len + password_len, MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
@@ -345,13 +347,13 @@ void remove_user(int fd) {
     uint8_t *message = NULL;
     int name_len = strlen(name_buffer);
 
-    message = realloc(message, 3 + name_len);
+    message = realloc(message, 4 + name_len);
     message[0] = 0x01;
-    message[1] = 0x02;
-    message[2] = name_len;
+    message[1] = 0x01;
+    message[2] = name_len + 1;
     strcpy((char *)(message + 3), name_buffer);
     
-    send(fd, message, sizeof(message), MSG_NOSIGNAL);
+    send(fd, message, 4 + name_len, MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
@@ -370,17 +372,20 @@ void modify_user(int fd) {
     printf("\n");
 
     uint8_t *message = NULL;
+
     int name_len = strlen(name_buffer);
     int password_len = strlen(password_buffer);
-    message = realloc(message, 3 + name_len + password_len);
-    message[0] = 0x01;
-    message[1] = 0x01;
-    message[2] = strlen(name_buffer);
-    strcpy((char *)(message + 3), name_buffer);
-    message[4+name_len] = password_len;
-    strcpy((char *)(message + 5 + name_len), password_buffer);
 
-    send(fd, message, sizeof(message), MSG_NOSIGNAL);
+
+    message = realloc(message, 6 + name_len + password_len);
+    message[0] = 0x01;
+    message[1] = 0x02;
+    message[2] = name_len + 1;
+    strcpy((char *)(message + 3), name_buffer);
+    message[3 + name_len + 1] = password_len + 1;
+    strcpy((char *)(message + name_len + 5), password_buffer);
+
+    send(fd, message, 6 + name_len + password_len, MSG_NOSIGNAL);
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);

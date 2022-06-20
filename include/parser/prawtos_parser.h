@@ -119,8 +119,8 @@ enum sniff_cmd {
 };
 
 enum admin {
-    admin   = 0x00,
-    user    = 0x01,
+    user    = 0x00,
+    admin   = 0x01,
 };
 
 enum prawtos_parser_state {
