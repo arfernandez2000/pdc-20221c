@@ -40,6 +40,8 @@ typedef struct hello_st
 typedef struct auth_st {
     buffer *read_buff, *write_buff;
     auth_parser parser;
+    auth auth;
+    uint8_t status;
     struct users user;
     uint8_t method;
 } auth_st;

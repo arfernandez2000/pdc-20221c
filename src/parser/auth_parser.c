@@ -10,7 +10,7 @@
 void auth_parser_init (auth_parser *p)
 {
     p->state = auth_version;
-    memset(&p->auth, 0, sizeof(p->auth));
+    memset(p->auth, 0, sizeof(*(p->auth)));
     p->n = 0;
     p->i = 0;
 }

@@ -110,7 +110,7 @@ char * get_all_users(){
 }
 
 int get_nusers() {
-     return list->size;
+    return list->size;
  }
 
 

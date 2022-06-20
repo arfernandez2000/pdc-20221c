@@ -96,25 +96,25 @@ void cmd_init(const unsigned int st, selector_key * key){
 
 static unsigned cmd_process(cmd_prawtos_st * state){
     fprintf(stdout, "Estoy al final de cmd_process!\n");
-    unsigned ret = CMD_WRITE;
+    unsigned ret = CMD_WRITE_PRAWTOS;
     switch (state->parser.type) {
     case 0x00:
         fprintf(stdout, "get!\n");
         fprintf(stdout, "cmd: %d\n", state->get.cmd);
         get_handlers[state->get.cmd](state);
         if(get_marshal(state->write_buff,state->status, state->get.cmd, state->nargs, state->args) == -1){
-            ret = ERROR;
+            ret = ERROR_PRAWTOS;
         }
         fprintf(stdout, "Despues de marshall!\n");
         break;
     case 0x01:
         user_handlers[state->user.cmd](state);
         if(user_marshal(state->write_buff,state->status) == -1){
-            ret = ERROR;
+            ret = ERROR_PRAWTOS;
         }
         break;
     default:
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
         break;
     }
     
@@ -123,7 +123,7 @@ static unsigned cmd_process(cmd_prawtos_st * state){
 
 unsigned cmd_read(selector_key * key){
     fprintf(stdout, "Estoy en cmd_read!\n");
-    unsigned ret = CMD_READ;
+    unsigned ret = CMD_READ_PRAWTOS;
     cmd_prawtos_st * state = &((struct prawtos *) key->data)->client.cmd;
     bool error = false;
     size_t count;
@@ -144,20 +144,20 @@ unsigned cmd_read(selector_key * key){
                 ret = cmd_process(state);
             }
             else{
-                ret = ERROR;
+                ret = ERROR_PRAWTOS;
             }
         }
 
     }
     else{
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
     }
-    return error ? ERROR : ret;
+    return error ? ERROR_PRAWTOS : ret;
 }
 
 unsigned cmd_write(selector_key *key) {
     cmd_prawtos_st * state = &((struct prawtos *) key->data)->client.cmd;
-    unsigned ret = CMD_WRITE;
+    unsigned ret = CMD_WRITE_PRAWTOS;
     size_t count;
     uint8_t  * ptr = buffer_read_ptr(state->write_buff, &count);
     fprintf(stdout, "key->fd: %d\n", key->fd);
@@ -165,17 +165,17 @@ unsigned cmd_write(selector_key *key) {
     ssize_t n = send(key->fd, ptr, count, MSG_NOSIGNAL);
     if(state->status == cmd_not_supported){
         fprintf(stdout, "Lrpmqmp\n");
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
     }
     else if (n > 0){
         buffer_read_adv(state->write_buff, n);
         if(!buffer_can_read(state->write_buff)){
             if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                ret = CMD_READ;
+                ret = CMD_READ_PRAWTOS;
             }
             else{
                 fprintf(stdout, "Lrpmqmp 1\n");
-                ret = ERROR;
+                ret = ERROR_PRAWTOS;
             }
         }
     }

@@ -11,28 +11,28 @@
 
 static const struct state_definition prawtos_init_states[]={
     {
-        .state = AUTH_READ,
+        .state = AUTH_READ_PRAWTOS,
         .on_arrival = auth_prawtos_init,
         .on_read_ready = auth_prawtos_read,
     },
     {
-        .state = AUTH_WRITE,
+        .state = AUTH_WRITE_PRAWTOS,
         .on_write_ready = auth_prawtos_write,
     },
     {
-        .state = CMD_READ,
+        .state = CMD_READ_PRAWTOS,
         .on_arrival = cmd_init,
         .on_read_ready = cmd_read,
     },
     {
-        .state = CMD_WRITE,
+        .state = CMD_WRITE_PRAWTOS,
         .on_write_ready = cmd_write,
     },
     {
-        .state = DONE,
+        .state = DONE_PRAWTOS,
     },
     {
-        .state = ERROR,
+        .state = ERROR_PRAWTOS,
     }
 };
 
@@ -46,8 +46,8 @@ static struct prawtos * prawtos_arrival(int client_fd){
     ret->client_fd = client_fd;
     ret->client_addr_len = sizeof(ret->client_addr);
     ret->stm.states = prawtos_init_states;
-    ret->stm.initial = CMD_READ;
-    ret->stm.max_state = ERROR;
+    ret->stm.initial = AUTH_READ_PRAWTOS;
+    ret->stm.max_state = ERROR_PRAWTOS;
     stm_init(&(ret->stm));
     buffer_init(&ret->read_buffer, sizeof(ret->raw_buff_a)/sizeof(((ret->raw_buff_a)[0])), ret->raw_buff_a);
     buffer_init(&ret->write_buffer, sizeof(ret->raw_buff_b)/sizeof(((ret->raw_buff_b)[0])), ret->raw_buff_b);
@@ -70,7 +70,7 @@ static void prawtos_write(struct selector_key *key){
     state_machine * stm = &((struct prawtos*)key->data)->stm;
     const enum prawtos_state st = stm_handler_write(stm, key);
 
-    if (ERROR == st || DONE == st)
+    if (ERROR_PRAWTOS == st || DONE_PRAWTOS == st)
     {
         prawtos_done(key);
     }
@@ -79,7 +79,7 @@ static void prawtos_write(struct selector_key *key){
 static void prawtos_read(struct selector_key *key){
     state_machine *stm = &((struct prawtos*)key->data)->stm;
     const enum prawtos_state st = stm_handler_read(stm, key);
-    if (ERROR == st || DONE == st){
+    if (ERROR_PRAWTOS == st || DONE_PRAWTOS == st){
         prawtos_done(key);
     }   
 }

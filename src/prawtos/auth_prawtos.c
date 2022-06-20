@@ -2,36 +2,33 @@
 #include <string.h>
 #include <sys/socket.h>
 
-static unsigned auth_prawtos_process(auth_prawtos_st * state);
+static unsigned auth_prawtos_process(auth_st * state);
 
 void auth_prawtos_init(const unsigned int st, selector_key * key){
-    auth_prawtos_st *state = &((struct prawtos *) key->data)->client.auth;
+    auth_st *state = &((struct prawtos *) key->data)->client.auth;
     state->read_buff = &((struct prawtos *) key->data)->read_buffer;
     state->write_buff = &((struct prawtos *) key->data)->write_buffer;
+    state->parser.auth = &state->auth;
     auth_parser_init(&state->parser);
-    memcpy(state->uname,state->parser.auth->uname, state->parser.auth->ulen);
-    state->ulen = state->parser.auth->ulen;
-    memcpy(state->passwd,state->parser.auth->passwd, state->parser.auth->plen);
-    state->plen = state->parser.auth->plen;
 }
 
-uint8_t check_credentials(const auth_prawtos_st *state){
+uint8_t check_credentials(const auth_st *state){
     return AUTH_SUCCESS;
 }
 
-unsigned auth_prawtos_process(auth_prawtos_st * state){
-    unsigned ret = AUTH_WRITE;
+unsigned auth_prawtos_process(auth_st * state){
+    unsigned ret = AUTH_WRITE_PRAWTOS;
     uint8_t status = check_credentials(state);
     if(auth_marshal(state->write_buff,status) == -1){
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
     }
     state->status = status;
     return ret;
 }
 
 unsigned auth_prawtos_read(selector_key * key){
-    unsigned ret = AUTH_READ;
-    auth_prawtos_st * state = &((struct prawtos *) key->data)->client.auth;
+    unsigned ret = AUTH_READ_PRAWTOS;
+    auth_st * state = &((struct prawtos *) key->data)->client.auth;
     bool error = false;
     size_t count;
 
@@ -46,34 +43,34 @@ unsigned auth_prawtos_read(selector_key * key){
                 ret = auth_prawtos_process(state);
             }
             else{
-                ret = ERROR;
+                ret = ERROR_PRAWTOS;
             }
         }
 
     }
     else{
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
     }
-    return error ? ERROR : ret;
+    return error ? ERROR_PRAWTOS : ret;
 }
 
 unsigned auth_prawtos_write(selector_key *key){
-    auth_prawtos_st * state = &((struct prawtos *) key->data)->client.auth;
-    unsigned ret = AUTH_WRITE;
+    auth_st * state = &((struct prawtos *) key->data)->client.auth;
+    unsigned ret = AUTH_WRITE_PRAWTOS;
     size_t count;
     uint8_t  * ptr = buffer_read_ptr(state->write_buff,&count);
     ssize_t n = send(key->fd,ptr,count,MSG_NOSIGNAL);
     if(state->status != AUTH_SUCCESS){
-        ret = ERROR;
+        ret = ERROR_PRAWTOS;
     }
     else if (n > 0){
         buffer_read_adv(state->write_buff,n);
         if(!buffer_can_read(state->write_buff)){
             if(selector_set_interest_key(key,OP_READ) == SELECTOR_SUCCESS){
-                ret = CMD_READ;
+                ret = CMD_READ_PRAWTOS;
             }
             else{
-                ret = ERROR;
+                ret = ERROR_PRAWTOS;
             }
         }
     }

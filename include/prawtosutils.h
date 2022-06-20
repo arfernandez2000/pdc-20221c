@@ -7,28 +7,29 @@
 #include "parser/auth_parser.h"
 #include "cmd_prawtos.h"
 #include "parser/prawtos_parser.h"
+#include "socks5utils.h"
 
 #define BUFFER_SIZE 4096
 
 enum prawtos_state
 {
-    AUTH_READ = 0,
-    AUTH_WRITE,
-    CMD_READ,
-    CMD_WRITE,
-    DONE,
-    ERROR,
+    AUTH_READ_PRAWTOS = 0,
+    AUTH_WRITE_PRAWTOS,
+    CMD_READ_PRAWTOS,
+    CMD_WRITE_PRAWTOS,
+    DONE_PRAWTOS,
+    ERROR_PRAWTOS,
 };
 
-typedef struct auth_prawtos_st{
-    buffer *read_buff, *write_buff;
-    auth_parser parser;
-    uint8_t ulen;
-    uint8_t uname[MAX_LEN];
-    uint8_t plen;
-    uint8_t passwd[MAX_LEN];
-    uint8_t status;
-} auth_prawtos_st;
+// typedef struct auth_prawtos_st{
+//     buffer *read_buff, *write_buff;
+//     auth_parser parser;
+//     uint8_t ulen;
+//     uint8_t uname[MAX_LEN];
+//     uint8_t plen;
+//     uint8_t passwd[MAX_LEN];
+//     uint8_t status;
+// } auth_prawtos_st;
 
 typedef struct cmd_prawtos_st {
     buffer *read_buff, *write_buff;
@@ -48,7 +49,7 @@ struct prawtos {
     state_machine stm;
 
     union{
-        auth_prawtos_st auth;
+        auth_st auth;
         cmd_prawtos_st cmd;
     } client;
 
