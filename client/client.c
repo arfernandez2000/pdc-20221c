@@ -40,7 +40,7 @@ static void clean_buffer();
 void options(int fd);
 void add_new_user(int fd, bool admin);
 void user_answer_handler(int fd, uint8_t *answer);
-void get_answer_handler(int fd, uint8_t *answer, char **result);
+void get_answer_handler(uint8_t *answer, char **result);
 void get_other_users(int fd, char **result, uint8_t *answer);
 
 
@@ -94,9 +94,9 @@ int main(int argc, char* argv[]) {
         exit(1);
 	}
 
-    // signal(SIGTERM, sigterm_handler);
-    // signal(SIGINT, sigterm_handler);
-    // signal(SIGPIPE, sigterm_handler);
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGINT, sigterm_handler);
+    signal(SIGPIPE, sigterm_handler);
 
     clean_buffer();
     
@@ -191,6 +191,7 @@ void first_message(int fd, socks5args *args) {
     char password_buffer[CREDENTIALS_SIZE];
     
     bool logged_in = false;
+    uint8_t *message = NULL;
     while (!logged_in) {
         if (args->users->name == 0 || args->users->pass == 0) {
             printf("Username: ");
@@ -206,9 +207,9 @@ void first_message(int fd, socks5args *args) {
         int name_len = strlen(name_buffer);
         int password_len = strlen(password_buffer);
 
-        uint8_t *message = NULL;
+        
 
-        message = realloc(message, 3 + name_len + password_len);
+        message = realloc(message, 3 + name_len + password_len + 1);
         message[0] = 0x01;
         message[1] = name_len;
         strcpy((char *)(message + 2), name_buffer);
@@ -239,6 +240,7 @@ void first_message(int fd, socks5args *args) {
                 break;
         }
     }
+    free(message);
 }
 
 
@@ -254,7 +256,8 @@ void options(int fd){
     while(!done){
         print_options();
         printf("Choose an option:\n");
-        scanf(buff, selected);
+        // scanf(buff, selected);
+        scanf("%s", selected);
 
         select = atoi(selected) -1;
         printf("\n---------------------------------------\n");
@@ -313,7 +316,13 @@ void get_command(int fd, uint8_t cmd, char *operation) {
         get_other_users(fd, result, answer);
     }
 
-    get_answer_handler(fd, answer, result);
+    get_answer_handler(answer, result);
+    if (answer[1] == 0x03) {
+        for (int i = 0; i < nargs; i++) {
+            free(result[i]);
+        }
+    }
+    free(result);
 }
 
 void get_other_users(int fd, char **result, uint8_t *answer) {
@@ -321,9 +330,8 @@ void get_other_users(int fd, char **result, uint8_t *answer) {
     int args_len = answer[3];
     int aux = 0;
     for (int i = 0; i < nargs; i++) {
-        result[i] = malloc(args_len);
+        result[i] = malloc(args_len + 2);
         if(result[i] == NULL) {
-            // nargs = i - 1;
             return;
         }
         recv(fd, result[i], args_len + 1, 0);
@@ -374,6 +382,8 @@ void add_new_user(int fd, bool admin) {
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
+
+    free(message);
 }
 
 void remove_user(int fd) {
@@ -396,6 +406,8 @@ void remove_user(int fd) {
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
+
+    free(message);
 }
 
 void modify_user(int fd) {
@@ -427,6 +439,8 @@ void modify_user(int fd) {
 
     uint8_t answer[1];
     user_answer_handler(fd, answer);
+
+    free(message);
 }
 
 void quit(int fd) {
@@ -515,7 +529,7 @@ void user_answer_handler(int fd, uint8_t *answer) {
     }
 }
 
-void get_answer_handler(int fd, uint8_t *answer, char **result) {
+void get_answer_handler(uint8_t *answer, char **result) {
 
     switch (answer[0]) {
     case 0x00:
@@ -557,72 +571,3 @@ void get_answer_handler(int fd, uint8_t *answer, char **result) {
     }
     putchar('\n');
 }
-
-
-
-
-
-
-
-// 0-create_user 1-create_admin 2-delete_user 3-modify_user
-// void user_command(int fd, uint8_t command) {
-//     char name_buffer[CREDENTIALS_SIZE];
-//     char password_buffer[CREDENTIALS_SIZE];
-//     uint8_t cmd;
-
-//     switch (command) {
-//     case 0:
-//         printf("\n---- Create user ----\n");
-//         cmd = 0x01;
-//         break;
-//     case 1:
-//         printf("\n---- Create admin ----\n");
-//         cmd = 0x01;
-//         break;
-//     case 2:
-//         printf("\n---- Delete user ----\n");
-//         cmd = 0x02;
-//         break;
-//     case 3:
-//         printf("\n---- Modify user ----\n");
-//         cmd = 0x03;
-//         break;
-//     default:
-//         printf("\nUnknown error\n");
-//         exit(1);
-//         break;
-//     }
-//     printf("Username: ");
-//     scanf("%s",name_buffer);
-//     if (command != 2) {
-//         printf("Password: ");
-//         scanf("%s",password_buffer);
-//         char password_len = strlen(password_buffer);
-//     }
-//     printf("\n");
-
-//     int nbyte = 0;
-//     uint8_t *message = NULL;
-//     int name_len = strlen(name_buffer);
-//     int password_len = strlen(password_buffer);
-//     message = realloc(message, 3 + name_len + password_len);
-//     message[nbyte++] = 0x01;
-//     message[nbyte++] = cmd;
-
-//     if (command == 0 || command == 1) {
-//         message[nbyte++] = (command == 1)? 0x00 : 0x01;
-//     }
-
-//     message[nbyte++] = strlen(name_buffer);
-//     strcpy((char *)(message + nbyte++), name_buffer);
-
-//     if (command != 2) {
-//         message[(nbyte++) + name_len] = password_len;
-//         strcpy((char *)(message + (nbyte++) + name_len), password_buffer);
-//     }
-
-//     send(fd, message, strlen(message), MSG_NOSIGNAL);
-
-//     uint8_t answer[1];
-//     user_answer_handler(fd, answer);
-// }
