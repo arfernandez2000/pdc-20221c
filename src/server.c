@@ -131,13 +131,6 @@ int main(const int argc, char **argv) {
         close(prawtos_fd);
 
 finally:
-    if(ss != SELECTOR_SUCCESS) {
-        fprintf(stderr, "%s: %s\n", (err_msg == NULL) ? "": err_msg,
-                                  ss == SELECTOR_IO
-                                      ? strerror(errno)
-                                      : selector_error(ss));
-        ret = 2;
-    }
 
     if(selector != NULL) {
         selector_destroy(selector);
@@ -154,9 +147,10 @@ finally:
     }
 
     if(prawtos_fd >=0){
-        close(prawtos_fd)
+        close(prawtos_fd);
     };
-    return ret;
+
+    return -1;
        
 }
 
