@@ -8,6 +8,6 @@
 
 
 void log_access(register_st *socks_info);
-void log_sniff(register_st* socks_info);
+void log_sniff(pop3_sniff * sniff,register_st* socks_info);
 
 #endif

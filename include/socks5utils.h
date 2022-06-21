@@ -23,10 +23,11 @@ enum pop3sniff_st
     POP3_INITIAL,
     POP3_USER,
     POP3_READ_USER, 
+    POP3_CHECK_USER,
     POP3_PASSWORD,
     POP3_READ_PASSWORD, 
     POP3_CHECK,
-    POP3_SUCCESS,
+    POP3_ERROR,
     POP3_DONE
 };
 
@@ -46,7 +47,8 @@ typedef struct register_st{
 
 typedef struct pop3_sniff{
     enum pop3sniff_st state;
-
+    struct sockaddr_storage *addr;
+    socklen_t *server_len;
     buffer buffer;
     uint8_t raw_buff[MAX_BUFFER_POP3_SIZE];
     char username[MAX_SIZE_USER];

@@ -5,7 +5,9 @@
 #include "buffer.h"
 #include "socks5utils.h"
 #include <stdbool.h>
+#include "../include/listADT.h"
 
+listADT list;
 
 #endif
 

@@ -42,3 +42,4 @@ void write_logger(struct selector_key * event){
         }
     }
 }
+

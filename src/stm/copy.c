@@ -115,10 +115,10 @@ static unsigned int copy_read(selector_key * event){
     }
     else
     {
+        buffer_write_adv(state->read_buff, n);
         if (origin_fd(event)) {
             pop3sniff(event, ptr, n);
         }
-        buffer_write_adv(state->read_buff, n);
 
     }
     check_interest(event->s, state);
@@ -152,11 +152,11 @@ static unsigned int copy_write(selector_key * event){
     }
     else
     {
+        buffer_read_adv(state->write_buff, n);
         stadistics_increase_bytes_sent(n);
         if (origin_fd(event) ) {
             pop3sniff(event, ptr, n);
         }
-        buffer_read_adv(state->write_buff, n);
     }
     check_interest(event->s, state);
     check_interest(event->s, state->other);

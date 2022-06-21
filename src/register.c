@@ -95,6 +95,29 @@ void log_access(register_st *register_info){
 }
 // config en runtime -> cambiar tamaño de buffers
 
-void log_sniff(register_st *register_info) {
-    print_log(register_info, 'P');
+void log_sniff(pop3_sniff * sniff, register_st *register_info) {
+    char date[DATE_SIZE];
+    date_to_string(date);
+    int length = sniff->addr->ss_family  == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
+    char ret[length];
+    ip_to_string(register_info->client_addr, ret,length);
+    char * dest_ip = dest_addr_to_string(register_info);
+    char *print = NULL;
+    size_t count;
+    logger * write_data = get_data_logger();
+    uint8_t * ptr = buffer_write_ptr(&write_data->write_buff,&count);
+    int n = 0;
+    print = "[%s]\t%s\tPOP3\t%s\t%u\t%s\t%s\n";
+    n = snprintf((char*)ptr,count,print, date, user_to_string(register_info), dest_ip, ntohs(register_info->dest_port), register_info->user, register_info->passwd);
+    if(n < 0){
+        // Error en la copia
+    }
+    if ((unsigned)n > count){
+        buffer_write_adv(&write_data->write_buff, count);
+    }
+    else{
+        buffer_write_adv(&write_data->write_buff,n);
+    }
+    selector_set_interest(write_data->selector,1, OP_WRITE);
+    free(dest_ip);
 }
