@@ -206,16 +206,16 @@ static unsigned request_process(selector_key * event, struct request_st * state)
                     // }
                 //}
                 break;
-        }
+        //}
         default:
-        {
+        //{
             ret = REQUEST_WRITE;
             state->status = status_address_type_not_supported;
             selector_set_interest_key(event, OP_WRITE);
+        //}
         }
-        }
+            break;
         break;
-
     case socks_req_cmd_bind:
     // Unsupported
     case socks_req_cmd_associate:
