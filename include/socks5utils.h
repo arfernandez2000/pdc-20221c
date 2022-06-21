@@ -120,7 +120,7 @@ enum session_state{
     HELLO_WRITE,
     REQUEST_READ,
     REQUEST_CONNECTING,
-    REQUEST_RESOLVE,
+    //REQUEST_RESOLVE,
     REQUEST_WRITE,
     COPY,
     ERROR,
@@ -162,8 +162,8 @@ typedef struct Session {
     Connection client;
     Connection server;
 
-    struct addrinfo *origin_resolution;
-    struct addrinfo *origin_resolution_current;
+    // struct addrinfo *origin_resolution;
+    // struct addrinfo *origin_resolution_current;
 
     register_st register_info;
     pop3_sniff sniff;

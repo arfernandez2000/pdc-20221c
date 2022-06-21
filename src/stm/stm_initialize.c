@@ -40,7 +40,7 @@ void stm_map() {
     //session_state_def[AUTH_READ] = auth_read_def();
     //session_state_def[AUTH_WRITE] = auth_write_state_def();
     session_state_def[REQUEST_READ] = request_read_state_def();
-    session_state_def[REQUEST_RESOLVE] = request_resolve_state_def();
+    //session_state_def[REQUEST_RESOLVE] = request_resolve_state_def();
     session_state_def[REQUEST_CONNECTING] = request_connecting_state_def();
     session_state_def[REQUEST_WRITE] = request_write_state_def();
     session_state_def[COPY] = copy_state_def();
