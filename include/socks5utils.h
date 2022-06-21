@@ -122,7 +122,7 @@ enum session_state{
     AUTH_WRITE,
     REQUEST_READ,
     REQUEST_CONNECTING,
-    //REQUEST_RESOLVE,
+    // REQUEST_RESOLVE,
     REQUEST_WRITE,
     COPY,
     ERROR,
