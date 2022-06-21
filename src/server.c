@@ -75,7 +75,7 @@ int main(const int argc, char **argv) {
 
     listen_interfaces(selector);
 
-    int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_STCP);
     struct sockaddr_in prawtos_addr;
     prawtos_addr.sin_family = AF_INET;
     inet_pton(AF_INET,args.mng_addr,&prawtos_addr.sin_addr);

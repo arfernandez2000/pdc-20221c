@@ -118,9 +118,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
 
-    // fprintf(stdout, "connect_ipv4\n");
-    
-    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_STCP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -136,10 +134,8 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     do {
        answer = connect(sock, (struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    //    fprintf(stdout, "connect: %d\n", errno);
     } while(answer == -1 && errno != EINTR);
 
-    // fprintf(stdout, "answer: %d\n", answer);
     // En el caso de que se pudo crear la conexion pero se cierra por razones ajenas
     if(answer == -1){
         close(sock);
@@ -152,7 +148,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in6 socket_addr;
     
-    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_STCP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
