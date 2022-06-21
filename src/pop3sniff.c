@@ -41,17 +41,14 @@ static enum pop3sniff_st initial_msg(struct pop3_sniff* sniff,uint8_t b){
     return state;
 }
 
-enum pop3sniff_st sniffer(struct pop3_sniff * sniff,uint8_t b, const char * sniffing,enum pop3sniff_st initial_state){
+enum pop3sniff_st sniffer(struct pop3_sniff * sniff,uint8_t b, const char * sniffing,enum pop3sniff_st initial_state, enum pop3sniff_st next_state){
     enum pop3sniff_st state = initial_state;
     if(tolower(b) == tolower(*(sniffing + sniff->read))){
         sniff->read++;
         sniff->remaining--;
         if(sniff->remaining == 0){
             sniff->read = 0;
-            if(state == POP3_PASSWORD){
-                state = POP3_READ_PASSWORD;
-            }
-            state = POP3_READ_USER;
+            state = next_state;
         }        
     }
     else{
@@ -110,6 +107,7 @@ enum pop3sniff_st check(struct pop3_sniff* sniff,uint8_t b){
             state = POP3_USER;
         }
     }
+    fprintf(stdout, "saliendo de check con %d\n", state);
     return state;
 }
 
@@ -120,13 +118,13 @@ enum pop3sniff_st pop3_parse(struct pop3_sniff* sniff,uint8_t b){
         sniff->state = initial_msg(sniff,b);
         break;
     case POP3_USER:
-        sniff->state = sniffer(sniff,b,USER,POP3_USER);
+        sniff->state = sniffer(sniff,b,USER,POP3_USER, POP3_READ_USER);
         break;
     case POP3_READ_USER:
         sniff->state = read_user(sniff,b);
         break;
     case POP3_PASSWORD:
-        sniff->state = sniffer(sniff,b,PASSWORD,POP3_PASSWORD);
+        sniff->state = sniffer(sniff,b,PASSWORD,POP3_PASSWORD, POP3_READ_PASSWORD);
         break;
     case POP3_READ_PASSWORD:
         sniff->state = read_password(sniff,b);
@@ -154,9 +152,14 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
         uint8_t b = buffer_read(&sniff->buffer);
         pop3_parse(sniff,b);
     }
+    fprintf(stdout, "despues del while\n");
     if (sniff->state == POP3_SUCCESS) {
         strcpy(logger->user, sniff->username);
         strcpy(logger->passwd, sniff->password);
+        fprintf(stdout, "en success\n");
+        //logger->user = sniff->username;
+        //logger->passwd = sniff->password;
+        printf(stdout, "after en success\n");
         log_sniff(logger);
     }
     return sniff->state;
