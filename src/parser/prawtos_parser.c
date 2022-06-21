@@ -259,7 +259,8 @@ get_marshal(buffer *b, const enum prawtos_response_status status, const enum get
     size_t count, len = 3 + args_len;
     uint8_t * ptr =  buffer_write_ptr(b, &count);
 
-    if(count < args[0] + 1){
+//SI SE ROMPE ES ESTO
+    if((int)count < args[0] + 1){
         return -1;
     }
 

@@ -49,6 +49,7 @@ void prawtos_passive_accept(selector_key* key);
 static void initialize_users();
 
 
+
 int main(const int argc, char **argv) {
 
     static bool done = false;
@@ -118,6 +119,13 @@ int main(const int argc, char **argv) {
             perror("Fallo en el while 1");
         }
     }
+
+    if(selector!=NULL)
+        selector_destroy(selector);
+    selector_close();
+    if(prawtos_fd > 0)
+        close(prawtos_fd);
+
 
 }
 
