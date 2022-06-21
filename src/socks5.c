@@ -5,6 +5,11 @@
 #include "../include/register.h"
 #include "../include/stadistics.h"
 
+static void server_write(selector_key * event);
+static void server_read(selector_key * event);
+static void server_close(selector_key * event);
+static void close_session(selector_key * event);
+
 static Session* initialize_session();
 
 
@@ -243,7 +248,7 @@ static void server_read(selector_key * event){
 }
 
 static void server_close(selector_key * event){
-    Session * session = (Session *) event->data;
+    //Session * session = (Session *) event->data;
     close(event->fd);
 }
 

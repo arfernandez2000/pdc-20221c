@@ -19,17 +19,13 @@
 void initialize_socks5();
 void new_connection_ipv4();
 void new_connection_ipv6();
-static void initialize_state_machine(state_machine * stm);
-static void server_write(selector_key * event);
-static void server_read(selector_key * event);
-static void server_close(selector_key * event);
-static void close_session(selector_key * event);
+//static void initialize_state_machine(state_machine * stm);
 void client_close(selector_key *event);
 void client_read(selector_key  *event);
 void client_write(selector_key * event);
 
 
-// const struct fd_handler server_handler = {
+// const struct fd_handler server_handler = {Library/Caches/com.apple.xbs
 //     .handle_read   = server_read,
 //     .handle_write  = server_write,
 //     .handle_close  = server_close,

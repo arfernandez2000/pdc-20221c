@@ -66,8 +66,10 @@ int main(const int argc, char **argv) {
     selector_status ss = SELECTOR_SUCCESS;
     fd_selector selector = init_selector();
 
-    if(selector == NULL)
+    if(selector == NULL){
+        free(selector);
         return -1;
+    }
     
     initialize_socks5(&args, selector);
 

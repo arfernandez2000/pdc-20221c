@@ -58,6 +58,7 @@ static char* dest_addr_to_string(register_st *socks_info){
 }
 
 static void print_log(register_st *register_info, char type) {
+    printf("adentro del print log\n");
     char date[DATE_SIZE];
     date_to_string(date);
     int length = register_info->client_addr.ss_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
@@ -91,6 +92,7 @@ static void print_log(register_st *register_info, char type) {
 }
 
 void log_access(register_st *register_info){
+    printf("adentro de log access\n");
     print_log(register_info, 'A');
 }
 // config en runtime -> cambiar tamaño de buffers

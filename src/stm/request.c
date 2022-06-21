@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "../../include/register.h"
 //#include <pthread.h>
 
 static void request_arrival(const unsigned st, selector_key * event);
@@ -278,6 +279,8 @@ static unsigned request_write(selector_key *event) {
             else {
                 ret = ERROR;
             }
+            printf("log_access\n");
+            //log_access(&((Session *) (event->data))->register_info);
         }
     }
     return ret;
