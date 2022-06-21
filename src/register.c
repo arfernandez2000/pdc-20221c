@@ -107,7 +107,7 @@ void log_sniff(pop3_sniff * sniff, register_st *register_info) {
     logger * write_data = get_data_logger();
     uint8_t * ptr = buffer_write_ptr(&write_data->write_buff,&count);
     int n = 0;
-    print = "[%s]\t%s\tPOP3\t%s\t%u\t%s\t%s\n";
+    print = "[%s]\t%s\tP\tPOP3\t%s\t%u\t%s\t%s\n";
     n = snprintf((char*)ptr,count,print, date, user_to_string(register_info), dest_ip, ntohs(register_info->dest_port), register_info->user, register_info->passwd);
     if(n < 0){
         // Error en la copia
