@@ -461,15 +461,11 @@ handle_iteration(fd_selector s) {
                         assert(("OP_READ arrived but no handler. bug!" == 0));
                     } else {
                         //ACA SE ROMPE
-                        fprintf(stdout,"ANTES DE GENERAR EL SOCKET %d\n", s->fds->fd);
                         item->handler->handle_read(&s_key);
-                        fprintf(stdout,"Despues de general el socket\n\n");
                     }
                 }
             }
             if(FD_ISSET(i, &s->slave_w)) {
-                fprintf(stdout, "If de write\n");
-                fprintf(stdout, "fd: %d\n", item->fd);
                 if(OP_WRITE & item->interest) {
                     if(0 == item->handler->handle_write) {
                         assert(("OP_WRITE arrived but no handler. bug!" == 0));

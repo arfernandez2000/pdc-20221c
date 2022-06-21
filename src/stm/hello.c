@@ -23,7 +23,6 @@ static void on_hello_method(void *data, const uint8_t method)
 }
 
 static void hello_arrival(unsigned int st, selector_key * event){
-    fprintf(stdout,"Estoy en hello_arrival!\n");
     hello_st * state  = &((Session *) (event->data)) ->client_header.hello;
     state->read_buff = &((Session *) (event->data)) ->input;
     state->write_buff =  &((Session *) (event->data)) ->output;
@@ -33,7 +32,6 @@ static void hello_arrival(unsigned int st, selector_key * event){
 }
 
 static unsigned hello_read(selector_key * event){
-    fprintf(stdout, "Estoy en el hello_read!\n");
     struct hello_st * state = &((Session *) (event->data))->client_header.hello;
     unsigned ret = HELLO_READ;
     bool error = false;
@@ -69,7 +67,6 @@ static unsigned hello_read(selector_key * event){
 
 static unsigned hello_write(selector_key *event)
 {
-    fprintf(stdout, "En el hello_write\n");
     struct hello_st * state = &((Session *) (event->data))->client_header.hello;
 
     unsigned ret = HELLO_WRITE;
@@ -86,8 +83,6 @@ static unsigned hello_write(selector_key *event)
     else
     {
         buffer_read_adv(state->write_buff, n);
-        fprintf(stdout, "write_buff: %s\n", state->write_buff->write);
-        fprintf(stdout, "write_buff: %s\n", state->write_buff->read);
         if (!buffer_can_read(state->write_buff))
         {   
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_READ))

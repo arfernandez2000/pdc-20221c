@@ -30,7 +30,6 @@ buffer_can_write(buffer *b) {
 
 inline uint8_t *
 buffer_write_ptr(buffer *b, size_t *nbyte) {
-    fprintf(stdout, "Estoy en buffer_write_ptr!\n");
     assert(b->write <= b->limit);
     *nbyte = b->limit - b->write;
     return b->write;

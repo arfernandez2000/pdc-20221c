@@ -8,7 +8,6 @@
 typedef int (*cmd_options)(cmd_prawtos_st *state);
 
 static int bytes_sent(cmd_prawtos_st *state){
-    fprintf(stdout, "Estoy en bytes_sent!\n");
     int args_len = 5;
     state->args = malloc(args_len * sizeof(uint8_t));
     uint32_t bytes = get_bytes_sent();
@@ -23,7 +22,6 @@ static int bytes_sent(cmd_prawtos_st *state){
 }
 
 static int total_connections(cmd_prawtos_st *state){
-    fprintf(stdout, "Estoy en total_connections!\n");
     int args_len = 3;
     state->args = malloc(args_len * sizeof(uint8_t));
     uint16_t connections = get_total_connections();
@@ -48,7 +46,6 @@ static int concurrent_connections(cmd_prawtos_st *state){
 }
 
 static int get_users_func(cmd_prawtos_st *state){
-    fprintf(stdout, "Estoy en get_user_func!\n");
     int nwrite = 0;
     char * users = get_all_users(&nwrite);
     if(users == NULL){
@@ -56,10 +53,6 @@ static int get_users_func(cmd_prawtos_st *state){
         return 0;
     }
     state->nargs = get_nusers();
-    for (int i = 0; i < 20; i++) {
-        printf(" %c", users[i]);
-    }
-    printf("\n\n\n\n\nnwrite: %d\n", nwrite);
     state->args = malloc(nwrite * sizeof(uint8_t));
     memcpy(state->args, (uint8_t *) users, nwrite);
     state-> status = success;
@@ -78,7 +71,6 @@ static int create_user(cmd_prawtos_st *state){
 }
 
 static int del_user(cmd_prawtos_st *state){
-    fprintf(stdout, "Estoy en del_user!\n");
     bool ans = delete_user((char*)state->parser.user->uname, state->parser.user->ulen);
     if(ans)
         state->status = success;
@@ -101,18 +93,15 @@ static int modify_user(cmd_prawtos_st *state){
 cmd_options user_handlers[] = {create_user, del_user, modify_user};
 
 void cmd_init(const unsigned int st, selector_key * key){
-    fprintf(stdout, "Estoy en cmd_init!\n");
     cmd_prawtos_st *state = &((struct prawtos *) (key->data))->client.cmd;
     state->read_buff = &((struct prawtos *) (key->data))->read_buffer;
     state->write_buff = &((struct prawtos *) (key->data))->write_buffer;
     state->parser.get = &state->get;
     state->parser.user = &state->user;
     prawtos_parser_init(&state->parser);
-    fprintf(stdout, "Estoy al final de cmd_init!\n");
 }
 
 static unsigned cmd_process(cmd_prawtos_st * state){
-    fprintf(stdout, "Estoy al final de cmd_process!\n");
     unsigned ret = CMD_WRITE_PRAWTOS;
     switch (state->parser.type) {
     case 0x00:
@@ -122,7 +111,6 @@ static unsigned cmd_process(cmd_prawtos_st * state){
         if(get_marshal(state->write_buff,state->status, state->get.cmd, state->nargs, state->args, args_len) == -1){
             ret = ERROR_PRAWTOS;
         }
-        fprintf(stdout, "Despues de marshall!\n");
         break;
     case 0x01:
         user_handlers[state->user.cmd](state);
@@ -131,7 +119,6 @@ static unsigned cmd_process(cmd_prawtos_st * state){
         }
         break;
     case 0x03:
-        fprintf(stdout, "quitttt!\n");
         state->status = success;
         if(quit_marshal(state->write_buff,state->status) == -1){
             ret = ERROR_PRAWTOS;
@@ -146,23 +133,18 @@ static unsigned cmd_process(cmd_prawtos_st * state){
 }
 
 unsigned cmd_read(selector_key * key){
-    fprintf(stdout, "Estoy en cmd_read!\n");
     unsigned ret = CMD_READ_PRAWTOS;
     cmd_prawtos_st * state = &((struct prawtos *) key->data)->client.cmd;
     bool error = false;
     size_t count;
 
-    fprintf(stdout, "Estoy en cmd_read 2!\n");
 
     uint8_t * ptr = buffer_write_ptr(state->read_buff, &count);
     ssize_t n = recv(key->fd, ptr, count, 0);
-    fprintf(stdout, "Estoy en cmd_read 3!\n");
     if (n > 0){
         buffer_write_adv(state->read_buff,n);
         int st = prawtos_consume(state->read_buff,&state->parser,&error);
-        fprintf(stdout, "Despues del prawtos_consume!\n");
         if(prawtos_is_done(st,0)){
-            fprintf(stdout, "Adntro del if prawtos_is_done!\n");
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
             {
                 ret = cmd_process(state);
@@ -184,11 +166,8 @@ unsigned cmd_write(selector_key *key) {
     unsigned ret = CMD_WRITE_PRAWTOS;
     size_t count;
     uint8_t  * ptr = buffer_read_ptr(state->write_buff, &count);
-    fprintf(stdout, "key->fd: %d\n", key->fd);
-    fprintf(stdout, "ptr: %s\n", ptr);
     ssize_t n = send(key->fd, ptr, count, MSG_NOSIGNAL);
     if(state->status == cmd_not_supported){
-        fprintf(stdout, "Lrpmqmp\n");
         ret = ERROR_PRAWTOS;
     }
     else if (n > 0){
@@ -201,7 +180,6 @@ unsigned cmd_write(selector_key *key) {
                     ret = CMD_READ_PRAWTOS;
                 }
                 else{
-                    fprintf(stdout, "Lrpmqmp 1\n");
                     ret = ERROR_PRAWTOS;
                 }
             }

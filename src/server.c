@@ -73,8 +73,6 @@ int main(const int argc, char **argv) {
     listen_interfaces(selector);
 
     int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    fprintf(stdout, "args.mng_addr: %s\n", args.mng_addr);
-    fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
     struct sockaddr_in prawtos_addr;
     prawtos_addr.sin_family = AF_INET;
     inet_pton(AF_INET,args.mng_addr,&prawtos_addr.sin_addr);
@@ -82,7 +80,6 @@ int main(const int argc, char **argv) {
 
     setsockopt(prawtos_fd, SOL_SOCKET, SO_REUSEADDR, &(int) {1}, sizeof(int));
 
-    fprintf(stdout, "prawtos_fd: %d\n", prawtos_fd);
 
     if (bind(prawtos_fd, (struct sockaddr *)&prawtos_addr, sizeof(prawtos_addr)) < 0)
     {
@@ -102,7 +99,6 @@ int main(const int argc, char **argv) {
         return -1;
     }
 
-    fprintf(stdout, "despues de los if\n");
 
     const struct fd_handler prawtos_handler = {
         .handle_read = prawtos_passive_accept,
@@ -110,7 +106,6 @@ int main(const int argc, char **argv) {
         .handle_close = NULL, // nada que liberar
     };
 
-    fprintf(stdout, "main server\n");
 
     stadistics_init();
     initialize_users();
@@ -161,7 +156,6 @@ void listen_interfaces(fd_selector selector) {
 static int generate_socket_ipv4(fd_selector selector){
     memset(&serverHandler.ipv4_handler, '\0', sizeof(serverHandler.ipv4_handler));
 
-    fprintf(stdout, "generate_socket_ipv4");
 
     // LLamo a la funcioan que socks5 a ejecutar
     serverHandler.ipv4_handler.handle_read = new_connection_ipv4;

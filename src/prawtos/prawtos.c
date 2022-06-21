@@ -101,7 +101,6 @@ const struct fd_handler prawtos_handler = {
 };
 
 void prawtos_passive_accept(selector_key * key) {
-    fprintf(stdout, "Esoty en prawtos_passive_accept!\n");
     struct sockaddr_storage client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     struct prawtos *state = NULL;

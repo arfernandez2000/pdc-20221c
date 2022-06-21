@@ -1,7 +1,6 @@
 #ifndef SOCKS5UTILS_H
 #define SOCKS5UTILS_H
 
-#include "buffer.h"
 #include "stm.h"
 #include "defs.h"
 #include "user_utils.h"
@@ -11,7 +10,53 @@
 #include "parser/auth_parser.h"
 #include "selector.h"
 #include "args.h"
+#include "pop3sniff.h"
 #include <netinet/in.h>
+#include <stdbool.h>
+
+
+#define MAX_SIZE_USER 255
+#define MAX_BUFFER_POP3_SIZE 4096
+
+enum pop3sniff_st
+{
+    POP3_INITIAL,
+    POP3_USER,
+    POP3_READ_USER, 
+    POP3_PASSWORD,
+    POP3_READ_PASSWORD, 
+    POP3_CHECK,
+    POP3_SUCCESS,
+    POP3_DONE
+};
+
+typedef struct register_st{
+    uint8_t method;
+    User user_info;
+    enum socks_response_status status;
+    enum socks_addr_type atyp;
+    struct sockaddr_storage client_addr;
+    union socks_addr dest_addr;
+    in_port_t dest_port;
+
+    //Sniffer
+    char *user;
+    char *passwd;
+} register_st;
+
+typedef struct pop3_sniff{
+    enum pop3sniff_st state;
+
+    buffer buffer;
+    uint8_t raw_buff[MAX_BUFFER_POP3_SIZE];
+    char username[MAX_SIZE_USER];
+    char password[MAX_SIZE_USER];
+    uint8_t read;
+    uint8_t remaining;
+    uint8_t check_read;
+    uint8_t check_remaining;
+    bool parsing;
+}pop3_sniff;
 
 typedef enum socket_state{
     INVALID,
@@ -105,19 +150,7 @@ union server_header {
     copy_st copy;
 };
 
-typedef struct register_st{
-    uint8_t method;
-    User user_info;
-    enum socks_response_status status;
-    enum socks_addr_type atyp;
-    struct sockaddr_storage client_addr;
-    union socks_addr dest_addr;
-    in_port_t dest_port;
 
-    //Sniffer
-    char *user;
-    char *passwd;
-} register_st;
 
 typedef struct Session {
 
@@ -130,6 +163,7 @@ typedef struct Session {
     Connection server;
 
     register_st register_info;
+    pop3_sniff sniff;
 
     union client_header client_header;
     union server_header server_header;
@@ -138,5 +172,15 @@ typedef struct Session {
 
     time_t lastModified;
 } Session;
+
+void pop3_init(struct pop3_sniff* sniff);
+
+enum pop3sniff_st pop3_parse(struct pop3_sniff* sniff,uint8_t b);
+
+bool pop3_done(struct pop3_sniff *sniff);
+
+bool pop3_parsing(struct pop3_sniff *sniff);
+
+enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st* logger);
 
 #endif

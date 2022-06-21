@@ -44,8 +44,6 @@ void new_connection_ipv4(selector_key *event) {
         fd = accept(event->fd, (struct sockaddr *)&cli_address, &clilen);
     } while (fd < 0 && (errno == EINTR));
 
-    fprintf(stdout, "fd_server: %d\n", fd);
-
     Session * session = initialize_session();  
     if (session == NULL) {
         perror("somos unos perrors");
@@ -97,7 +95,6 @@ void new_connection_ipv6(selector_key *event) {
 }
 
 static Session* initialize_session() {
-    fprintf(stdout,"initialize_session");
     Session* session = malloc(sizeof(*session));
     if(session == NULL){
         return NULL;
@@ -163,12 +160,10 @@ static Session* initialize_session() {
     //     return NULL;
     // }
 
-    fprintf(stdout,"Si llegue aca es porque funcionan los mallocs");
 
     buffer_init(&session->input, inputBufferSize, inputBuffer);
     buffer_init(&session->output, outputBufferSize, outputBuffer);
     stm_create(&(session->s_machine));
-    fprintf(stdout,"DESPUES DEL CREATE STM");
     // initialize_state_machine(&session->s_machine);
     
     
@@ -182,7 +177,6 @@ static Session* initialize_session() {
 
 void client_write(selector_key * event){
 
-    fprintf(stdout,"Estoy en client_write!\n");
     
     state_machine * stm = &((Session *) event->data)->s_machine;
     const enum session_state st = stm_handler_write(stm, event);
@@ -196,7 +190,6 @@ void client_write(selector_key * event){
 
 void client_read(selector_key  *event)
 {
-    fprintf(stdout,"Estoy en client_read!\n");
     state_machine * stm = &((Session *) event->data)->s_machine;
     const enum session_state st = stm_handler_read(stm, event);
 
@@ -207,7 +200,6 @@ void client_read(selector_key  *event)
 }
 
 void client_close(selector_key *event){
-    fprintf(stdout, "Estoy en el client_close\n");
     Session * session = (Session * ) event->data;
     
     close(session->client.fd);
@@ -217,17 +209,17 @@ void client_close(selector_key *event){
 }
     
 static void close_session(selector_key * event){
-    fprintf(stdout, "Estoy en el close_session\n");
     Session * session = (Session *) event->data;
     selector_unregister_fd(event->s, session->client.fd);
     if(get_concurrent_connections() > 0)
         stadistics_decrease_concurrent();
     close(session->client.fd);
+    //free(session->client);
+    //free(session);
 
 }
 
 static void server_read(selector_key * event){
-    fprintf(stdout, "Estoy en el server_read");
     Session * session = (Session *) event->data;
     session->lastModified = time(NULL);
 
@@ -251,13 +243,11 @@ static void server_read(selector_key * event){
 }
 
 static void server_close(selector_key * event){
-    fprintf(stdout, "Estoy en el server_close");
     Session * session = (Session *) event->data;
     close(event->fd);
 }
 
 static void server_write(selector_key * event){
-    fprintf(stdout, "Estoy en el server_write");
     Session * session = (Session *) event->data;
     session->lastModified = time(NULL);
 

@@ -48,20 +48,6 @@ const fd_handler client_handler_request = {
     .handle_close  = client_close,
 };
 
-// state_definition request_resolve_state_def(void) {
-
-//     state_definition state_def = {
-//         .state = REQUEST_RESOLVE,
-//         .on_arrival = NULL,
-//         .on_read_ready = NULL,
-//         .on_write_ready = request_resolve,
-//         .on_block_ready = NULL,
-//         .on_departure = NULL,
-//     };
-
-//     return state_def;
-// }
-
 state_definition request_connecting_state_def(void) {
 
     state_definition state_def = {
@@ -78,7 +64,6 @@ state_definition request_connecting_state_def(void) {
 
 static void request_arrival(const unsigned st, selector_key * event)
 {
-    fprintf(stdout,"Estoy en request_arrival\n");
     request_st * state = &((Session *) (event->data))->client_header.request;
     state->read_buff = &((Session *) (event->data))->input;
     state->write_buff =  &((Session *) (event->data))->output;
@@ -88,11 +73,9 @@ static void request_arrival(const unsigned st, selector_key * event)
     
     state->client.fd = ((Session *) (event->data))->client.fd;
     state->server.fd =  ((Session *) (event->data))->server.fd;
-    fprintf(stdout, "Server fd: %d\n", state->server.fd);
     state->server.address = ((Session *) (event->data)) ->server.address;
     state->server.address_len = ((Session *) (event->data)) ->server.address_len;
     state->server.domain = ((Session *) (event->data)) ->server.domain;
-    fprintf(stdout,"Saliendo de request_arrival\n");
 }
 
 static unsigned request_process(selector_key * event, struct request_st * state)
@@ -152,7 +135,6 @@ static unsigned request_process(selector_key * event, struct request_st * state)
 
 
 static unsigned request_read(selector_key * event) {
-    fprintf(stdout, "Estoy en request_read!\n");
     request_st * state = &((Session *) (event->data))->client_header.request;
     unsigned ret = REQUEST_READ;
     bool error = false;
@@ -174,12 +156,10 @@ static unsigned request_read(selector_key * event) {
     {
         ret = ERROR;
     }
-    fprintf(stdout, "Saliendo de request_read con error: %d y ret: %d\n", error, ret);
     return error ? ERROR : ret;
 }
 
 static unsigned request_write(selector_key *event) {
-    fprintf(stdout, "Estoy en request_write!\n");
     request_st *state = &((Session *) (event->data))->client_header.request;
 
     buffer *b = state->write_buff;
@@ -204,7 +184,6 @@ static unsigned request_write(selector_key *event) {
             }
         }
     }
-    printf("EL RET ES %d", ret);
     return ret;
 }
 
@@ -212,10 +191,8 @@ static unsigned request_write(selector_key *event) {
 static void request_connecting_arrival(const unsigned int st, selector_key *event)
 {
     connect_st *state = &((Session *) (event->data))->server_header.conect;
-    printf("Client fd from event: %d\n",((Session *) (event->data))->server.fd );
     state->client_fd = &((Session *) (event->data))->client.fd;
     state->origin_fd = &((Session *) (event->data))->server.fd;
-        printf("connect client fd: %d\n", *state->origin_fd );
     state->status = &((Session *) (event->data))->client_header.request.status;
     state->write_buff= &((Session *) (event->data))->output;
 }
@@ -238,10 +215,8 @@ static unsigned request_connect(selector_key *event, request_st *state)
     }
 
     unsigned ret = REQUEST_CONNECTING;
-    fprintf(stdout, "En request_connect!\n");
     *fd = socket(session->server.domain, SOCK_STREAM, 0);
     session->server.fd = *fd;
-    printf("Request_connect - el socket es %d\n", *fd);
     if (*fd == -1)
     {
         error = true;
@@ -256,24 +231,18 @@ static unsigned request_connect(selector_key *event, request_st *state)
     if (connect(*fd, (const struct sockaddr *)&session->server.address,
                session->server.address_len)  == -1)
     {
-        printf("Request_connect - fallo el connect\n");
         if (errno == EINPROGRESS)
         {
-            printf("Request_connect - errno einprogress\n");
             selector_status st = selector_set_interest_key(event, OP_NOOP);
             if (st != SELECTOR_SUCCESS)
             {
                 error = true;
                 goto finally;
             }
-            printf("EN EL request connect, selector success\n");
             if(!fd_registered) {
                 st = selector_register(event->s, *fd, &client_handler_request, OP_WRITE, event->data);
-
-                printf("request_connect, fd register as: %d\n", *fd);
             }
             else {
-                printf("EN EL request connect, else\n");
                 st = selector_set_interest(event->s, *fd, OP_WRITE);
             }
 
@@ -285,7 +254,6 @@ static unsigned request_connect(selector_key *event, request_st *state)
         }
         else
         {
-            printf("EN EL request connect, erno default\n");
             session->client_header.request.status = errno_to_socks(errno);
             if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
             {
@@ -313,7 +281,6 @@ finally:
 
 static unsigned request_connecting(selector_key *event)
 {
-    fprintf(stdout, "Estoy en request_connecting!");
     int error;
     socklen_t len = sizeof(error);
     unsigned ret = REQUEST_CONNECTING;
@@ -321,15 +288,12 @@ static unsigned request_connecting(selector_key *event)
     struct Session *session = ((Session *) (event->data));
     int *fd = &session->server.fd;
     int ret_sock = getsockopt(*fd, SOL_SOCKET, SO_ERROR, &error, &len);
-    fprintf(stdout, "getscokopt ret: %d\n", ret_sock);
     if (ret_sock == 0)
     {
-        fprintf(stdout, "if de request_connecting\n");
         selector_set_interest(event->s, *session->server_header.conect.client_fd, OP_WRITE);
         
         if (error == 0)
         {
-            fprintf(stdout, "Success\n");
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
         }
@@ -344,7 +308,5 @@ static unsigned request_connecting(selector_key *event)
         }
         //ATTACHMENT(key)->socks_info.status = data->client.request.status;    
     }
-    fprintf(stdout, "getscokopt error: %d\n", error);
-    fprintf(stdout, "getscokopt fd: %d\n", *fd);
     return ret;
 }

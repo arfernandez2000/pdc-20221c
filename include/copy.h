@@ -3,7 +3,8 @@
 
 #include "stm.h"
 
-state_definition copy_state_def(void);
+state_definition copy_state_def(void);\
+
 
 #endif
 

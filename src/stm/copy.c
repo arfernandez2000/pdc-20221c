@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "../../include/copy.h"
 #include "../../include/socks5utils.h"
 #include "../../include/stm_initialize.h"
@@ -65,6 +66,33 @@ static copy_st *copy_ptr(selector_key *event)
     return state;
 }
 
+static bool origin_fd(selector_key * event){
+    return event->fd ==  &((Session *) (event->data))->server.fd;
+}
+
+static void pop3sniff(selector_key *event, uint8_t *ptr, ssize_t size){
+
+    pop3_sniff *s = &((Session *) (event->data))->sniff;
+    
+    if(!pop3_parsing(s)){
+        pop3_init(s);
+    }
+    if(!pop3_done(s)){
+        size_t count;
+        uint8_t *pop3_ptr = buffer_write_ptr(&s->buffer,&count);
+        
+        if((unsigned) size <= count){
+            memcpy(pop3_ptr,ptr,size);
+            buffer_write_adv(&s->buffer,size);
+        }
+        else{
+            memcpy(pop3_ptr,ptr,count);
+            buffer_write_adv(&s->buffer,count);
+        }
+        pop3_consume(s,&((Session *) (event->data))->register_info);
+    }
+}
+
 static unsigned int copy_read(selector_key * event){
 
     copy_st * state = copy_ptr(event);
@@ -87,6 +115,9 @@ static unsigned int copy_read(selector_key * event){
     }
     else
     {
+        if (origin_fd(event)) {
+            pop3sniff(event, ptr, n);
+        }
         buffer_write_adv(state->read_buff, n);
 
     }
@@ -122,6 +153,9 @@ static unsigned int copy_write(selector_key * event){
     else
     {
         stadistics_increase_bytes_sent(n);
+        if (origin_fd(event) ) {
+            pop3sniff(event, ptr, n);
+        }
         buffer_read_adv(state->write_buff, n);
     }
     check_interest(event->s, state);

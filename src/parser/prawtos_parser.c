@@ -213,11 +213,9 @@ prawtos_parser_feed (prawtos_parser *p, const uint8_t c) {
 
 void 
 prawtos_parser_init(prawtos_parser *p) {
-    fprintf(stdout, "Al principio del prawtos_parser_init\n");
     p->state = prawtos_type;
     memset(p->get, 0, sizeof(*(p->get)));
     memset(p->user, 0, sizeof(*(p->user)));
-    fprintf(stdout, "Despues del memset\n");
 }
 
 bool prawtos_is_done(const enum prawtos_parser_state state, bool *errored)
@@ -243,28 +241,21 @@ bool prawtos_is_done(const enum prawtos_parser_state state, bool *errored)
 
 enum prawtos_parser_state
 prawtos_consume (buffer *b, prawtos_parser *p, bool *errored) {
-    fprintf(stdout, "Estoy en prawtos_consume!\n");
     enum prawtos_parser_state st = p->state;
     bool finished = false;
-     fprintf(stdout, "Estoy en prawtos_consume2 !\n");
     while (buffer_can_read(b) && !finished)
     {
-        fprintf(stdout, "Estoy en el while de prawtos_consume!\n");
         uint8_t byte = buffer_read(b);
         st = prawtos_parser_feed(p, byte);
-        fprintf(stdout, "Estoy en el while de prawtos_consume2!\n");
         if(prawtos_is_done(st, errored)) {
             finished = true;
         }
     }
-    fprintf(stdout, "Estoy en final de prawtos_consume!\n");
     return st;
 }
 
 int 
 get_marshal(buffer *b, const enum prawtos_response_status status, const enum get_cmd cmd, uint8_t nargs, uint8_t* args, int args_len){
-    printf("args en 0+1:%d\n", args[0]+1);
-    printf("argslen: %d\n", args_len);
     size_t count, len = 3 + args_len;
     uint8_t * ptr =  buffer_write_ptr(b, &count);
 

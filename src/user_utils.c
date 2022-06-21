@@ -8,7 +8,6 @@ static user_list * list = NULL;
 
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
-    fprintf(stdout, "AAAAAAAAAAa\n\n\n\n\n");
     add_user("admin2", 7, "alggo2", 7, true);
     add_user("admin", 6, "alggo", 6, true);
     add_user("pruebita", 9, "pruebita", 9, true);
@@ -54,9 +53,6 @@ bool delete_user(char* username, uint8_t ulen){
 	int c = -1;
      // Avanzamos hasta encontrar el elemento a borrar o detectar que no esta
 	while( curr != NULL && c != 0) {
-        fprintf(stdout, "while!\n");
-        fprintf(stdout, "current_uname: %s!\n", curr->username);
-        fprintf(stdout, "uname: %s!\n", username);
 		c = strcmp(curr->username, username);
 		if ( c != 0) {
 			prev = curr;
@@ -125,7 +121,7 @@ char * get_all_users(int *nwrite){
         strcpy(all_users + cont, user->username);
         cont += user->ulen;
         user = user->next;
-    }
+    }   
     *nwrite = cont;
     return all_users;
 }
@@ -136,15 +132,9 @@ int get_nusers() {
 
 int user_check_credentials(char* uname, char* passwd){
     User * current = list->first;
-    printf("uname %s\n", uname);
-    printf("passwd %d\n", passwd);
 
     while (current != NULL) {
-        printf("Is admin? %d\n", current->is_admin);
-        printf("name %s\n", current->username);
-        printf("pass %d\n", current->password);
         if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0 && current->is_admin == true){
-            printf("SOY ADMIN\n\n");
             return 0;
         }
         current = current->next;
