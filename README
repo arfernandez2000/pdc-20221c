@@ -1,0 +1,61 @@
+# Proxy SOCKSv5 - PDC - Grupo 8 - 20202Q
+
+el protocolo SOCKSv5 permite atravesar de forma segura y transparente firewalls que aíslan una red. Esta implementación cuenta con las siguientes características:
+
+- Atiende a múltiples clientes en forma concurrente.
+- Los clientes pueden autenticarse utilizando un usuario y una contraseña como lo indica el RFC 1929.
+- Soporta conexiones a direcciones IPv4, IPv6.
+- Cuenta con un protocolo de configuracion para monitorear la operación del sistema y cambiar la configuración del servidor en tiempo de ejecución. 
+- Monitorea el tráfico para POP3. 
+
+
+
+### Instalación
+
+Requerimientos previos:
+- Un compilador de C ([GCC](https://gcc.gnu.org/) o [CLANG](https://clang.llvm.org/)) 
+- La herramienta ```make```
+
+Compilación del proyecto e inicio del proxy
+
+```sh
+$ git clone https://github.com/arfernandez2000/pdc-20221c.git
+$ cd pdc-20221c
+$ make all
+$ ./server
+```
+
+### Guía de uso
+
+Para ver todos los comandos soportados por el proxy, ejecute el siguiente comando:
+```sh
+$ man ./socks5d.8
+```
+Por defecto, el proxy escucha en el puerto 1080 en la dirección 0.0.0.0 para IPv4 y en :: para IPv6. Por otro lado, para conexiones destinadas a configuración del proxy escucha en el puerto 8080 en 127.0.0.1.
+
+Para comenzar a utilizarlo se debe configurar el programa que se desea utilizar para que deriven los pedidos de conexión al proxy. A continuación se listan algunos ejemplos de para curl, wget, ncat y firefox con los valores de configuración por defecto:
+
+```sh
+curl -x socks5://localhost:1080 www.google.com
+
+
+### Cliente de configuración del proxy
+
+Para compilar el cliente de configuración del proxy, ejecute el siguiente comando:
+
+```sh
+$  cd client; make all;
+```
+Para correr el cliente desde la carpeta client:
+```sh
+$ ./client
+```
+
+```
+Para acceder a la configuración y a las métricas del proxy en tiempo de ejecución, ejecute el cliente e ingrese las credenciales del usuario administrador, que por defecto son admin1:admin1 y admin2:admin2 (asegurarse que el proxy esté corriendo en otra terminal). Alli se va a encontrar con un menu interactivo
+
+
+### Limpieza de los archivos objeto
+```sh
+$ make clean; cd client; make clean;
+```
