@@ -118,7 +118,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
 
-    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_STCP);
+    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_SCTP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -148,7 +148,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in6 socket_addr;
     
-    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_STCP);
+    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_SCTP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -213,6 +213,7 @@ void first_message(int fd, socks5args *args) {
 
         send(fd, message, 3 + name_len + password_len, MSG_NOSIGNAL);
         uint8_t answer[2];
+
         recv(fd, answer, 2, 0);
         
         // El primer byte de la respuesta se ignora
@@ -222,15 +223,15 @@ void first_message(int fd, socks5args *args) {
                 logged_in = true;
                 break;
             case 0x01:
-                printf("\nServer failure\n");
+                printf("\nIncorrect password. Please try again\n");
                 exit(1);
                 break;
             case 0x02:
-                printf("\nVersion not supported\n");
+                printf("\nNo user found. Please try again\n");
                 exit(1);
                 break;
             case 0x03:
-                printf("\nIncorrect username or password. Please try again\n");
+                printf("\nAccess denied: user is not an admin\n");
                 exit(1);
                 break;
         }

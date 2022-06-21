@@ -13,8 +13,8 @@
 #include "stm.h"
 #include "selector.h"
 
-#define INPUT_BUFFER_SIZE 100
-#define OUTPUT_BUFFER_SIZE 100
+#define INPUT_BUFFER_SIZE 1024
+#define OUTPUT_BUFFER_SIZE 1024
 
 void initialize_socks5();
 void new_connection_ipv4();

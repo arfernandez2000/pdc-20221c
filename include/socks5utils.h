@@ -40,8 +40,8 @@ typedef struct register_st{
     in_port_t dest_port;
 
     //Sniffer
-    char *user;
-    char *passwd;
+    char user[255];
+    char passwd[255];
 } register_st;
 
 typedef struct pop3_sniff{
@@ -118,6 +118,8 @@ typedef struct connect_st
 enum session_state{
     HELLO_READ = 0,
     HELLO_WRITE,
+    AUTH_READ,
+    AUTH_WRITE,
     REQUEST_READ,
     REQUEST_CONNECTING,
     //REQUEST_RESOLVE,
@@ -125,8 +127,6 @@ enum session_state{
     COPY,
     ERROR,
     DONE,
-    AUTH_READ,
-    AUTH_WRITE,
 };
 
 typedef struct copy_st

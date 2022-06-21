@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "../include/parser/auth_parser.h"
 static user_list * list = NULL;
 
 void init_user_list( void ){
@@ -130,16 +130,22 @@ int get_nusers() {
     return list->size;
 }
 
-int user_check_credentials(char* uname, char* passwd){
+int user_check_credentials(char* uname, char* passwd, int public){
     User * current = list->first;
 
     while (current != NULL) {
-        if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0 && current->is_admin == true){
-            return 0;
+        if(strcmp(uname, current->username) == 0) {
+            if(strcmp(passwd, current->password) == 0){
+                if(current->is_admin == true || public == 1)
+                    return AUTH_SUCCESS;
+                else
+                    return AUTH_NOT_AUTHORIZED;
+            } else
+                return AUTH_BAD_CREDENTIALS;
         }
         current = current->next;
     }
-    return 1;   
+    return AUTH_NO_USER;   
 }
 
 
