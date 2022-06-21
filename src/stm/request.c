@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <pthread.h>
-
+//#include <pthread.h>
 static void request_arrival(const unsigned st, selector_key * event);
 static unsigned request_process(selector_key * event, request_st * state);
 static unsigned request_read(selector_key * event);
@@ -13,12 +12,8 @@ static unsigned request_write(selector_key *event);
 static void request_connecting_arrival(const unsigned int st, selector_key *event);
 static unsigned request_connect(selector_key *event, request_st *state);
 static unsigned request_connecting(selector_key *event);
-static unsigned request_resolv_done(selector_key *key);
-int next_ip(Session *socks5, request_st *request);
-
-
+//static unsigned request_resolve_done(selector_key *key);
 state_definition request_read_state_def(void) {
-
     state_definition state_def = {
         .state = REQUEST_READ,
         .on_arrival = request_arrival,
@@ -27,27 +22,21 @@ state_definition request_read_state_def(void) {
         .on_block_ready = NULL,
         .on_departure = NULL,
     };
-
     return state_def;
 }
-
-state_definition request_resolve_state_def(void){
-
-    state_definition state_def = {
-        .state = REQUEST_RESOLVE,
-        .on_arrival = NULL,
-        .on_read_ready = NULL,
-        .on_write_ready = NULL,
-        .on_block_ready = request_resolv_done,
-        .on_departure = NULL,
-    };
-
-    return state_def;
+// state_definition request_resolve_state_def(void){
+//     state_definition state_def = {
+//         .state = REQUEST_RESOLVE,
+//         .on_arrival = NULL,
+//         .on_read_ready = NULL,
+//         .on_write_ready = NULL,
+//         .on_block_ready = request_resolve_done,
+//         .on_departure = NULL,
+//     };
+//     return state_def;
     
-}
-
+// }
 state_definition request_write_state_def(void) {
-
     state_definition state_def = {
         .state = REQUEST_WRITE,
         .on_arrival = NULL,
@@ -56,18 +45,14 @@ state_definition request_write_state_def(void) {
         .on_block_ready = NULL,
         .on_departure = NULL,
     };
-
     return state_def;
 }
-
 const fd_handler client_handler_request = {
     .handle_read   = client_read,
     .handle_write  = client_write,
     .handle_close  = client_close,
 };
-
 state_definition request_connecting_state_def(void) {
-
     state_definition state_def = {
         .state = REQUEST_CONNECTING,
         .on_arrival = request_connecting_arrival,
@@ -76,43 +61,33 @@ state_definition request_connecting_state_def(void) {
         .on_block_ready = NULL,
         .on_departure = NULL,
     };
-
     return state_def;
 }
-
-static void *request_resolv_blocking(void *data) {
-        printf("estoy en el request_blocking! \n");
-    selector_key *key = (selector_key *)data;
-    Session *s = ((Session *) (key->data));
-
-    pthread_detach(pthread_self());
-    s->origin_resolution = 0;
-
-    struct addrinfo hints = {
-        .ai_family = AF_UNSPEC,
-        .ai_socktype = SOCK_STREAM,
-        .ai_flags = AI_PASSIVE,
-        .ai_protocol = 0,
-        .ai_canonname = NULL,
-        .ai_addr = NULL,
-        .ai_next = NULL,
-    };
-
-    char buff[7];
-    snprintf(buff, sizeof(buff), "%d",
-             ntohs(s->client_header.request.request.dest_port));
-
-    getaddrinfo(s->client_header.request.request.dest_addr.fdqn, buff, &hints,
-                &s->origin_resolution);
-    s->origin_resolution_current = s->origin_resolution;
-
-    selector_notify_block(key->s, key->fd);
-
-    free(data);
-
-    return 0;
-}
-
+// static void *request_resolv_blocking(void *data) {
+//     selector_key *key = (struct selector_key *)data;
+//     Session * state = ((Session *) (data));
+//     pthread_detach(pthread_self());
+//     state->origin_resolution = 0;
+//     struct addrinfo hints = {
+//         .ai_family = AF_UNSPEC,
+//         .ai_socktype = SOCK_STREAM,
+//         .ai_flags = AI_PASSIVE,
+//         .ai_protocol = 0,
+//         .ai_canonname = NULL,
+//         .ai_addr = NULL,
+//         .ai_next = NULL,
+//     };
+//     char buff[7]; 
+//     snprintf(buff, sizeof(buff), "%d",
+//              ntohs(state->client_header.request.request.dest_port));
+//     if(getaddrinfo(state->client_header.request.request.dest_addr.fdqn, buff, &hints,&state->origin_resolution)==1){
+//                     perror("Error making getaddrinfo\n");
+//     }
+//     state->origin_resolution_current = state->origin_resolution;
+//     selector_notify_block(key->s, key->fd);
+//     free(data);
+//     return 0;
+// }
 static void request_arrival(const unsigned st, selector_key * event)
 {
     request_st * state = &((Session *) (event->data))->client_header.request;
@@ -128,38 +103,32 @@ static void request_arrival(const unsigned st, selector_key * event)
     state->server.address_len = ((Session *) (event->data)) ->server.address_len;
     state->server.domain = ((Session *) (event->data)) ->server.domain;
 }
-
-static unsigned request_resolv_done(selector_key *key) {
-    request_st *d = &((Session *) (key->data))->client_header.request;
-    Session *s = ((Session *) (key->data));
-    if (s->origin_resolution == 0) {
-        d->status = status_host_unreachable;
-        s->register_info.status = d->status;
-        if (-1 != request_marshal(d->write_buff, d->status, d->request.dest_addr_type,
-                                   d->request.dest_addr,
-                                   d->request.dest_port)) {
-            selector_set_interest(key->s, d->client.fd, OP_WRITE);
-            return REQUEST_WRITE;
-        } else {
-            return ERROR;
-        }
-
-    } else {
-        s->server.domain = s->origin_resolution_current->ai_family;
-        s->server.address_len = s->origin_resolution_current->ai_addrlen;
-        memcpy(&s->server.address, s->origin_resolution_current->ai_addr,
-               s->origin_resolution_current->ai_addrlen);
-    }
-
-    return request_connect(key, d);
-}
-
+// static unsigned request_resolve_done(selector_key *key) {
+//     struct request_st *d =  &((Session *) (key->data))->client_header.request;
+//     struct Session *s = ((Session *) (key->data));
+//     if (s->origin_resolution == 0) {
+//         d->status = status_host_unreachable;
+//         s->register_info.status = d->status;
+//         if (-1 != request_marshal(d->write_buff, d->status, d->request.dest_addr_type,
+//                                    d->request.dest_addr,
+//                                    d->request.dest_port)) {
+//             selector_set_interest(key->s, d->client.fd, OP_WRITE);
+//             return REQUEST_WRITE;
+//         } else {
+//             return ERROR;
+//         }
+//     } else {
+//         s->server.domain = s->origin_resolution_current->ai_family;
+//         s->server.address_len = s->origin_resolution_current->ai_addrlen;
+//         memcpy(&s->server.address, s->origin_resolution_current->ai_addr,
+//                s->origin_resolution_current->ai_addrlen);
+//     }
+//     return request_connect(key, d);
+// }
 static unsigned request_process(selector_key * event, struct request_st * state)
 {
-    pthread_t tid;
+    //pthread_t tid;
     unsigned ret = REQUEST_CONNECTING;
-    printf("estoy en el request_process! \n");
-
     switch (state->request.cmd)
     {
     case socks_req_cmd_connect:
@@ -186,59 +155,59 @@ static unsigned request_process(selector_key * event, struct request_st * state)
             break;
         }
         case socks_addr_type_domain:
-            printf("");
-            selector_key *k = malloc(sizeof(*event));
-                if (k == NULL) {
-                    ret = REQUEST_WRITE;
-                    state->status = status_general_SOCKS_server_failure;
-                    selector_set_interest_key(event, OP_WRITE);
-                } else {
-                    memcpy(k, event, sizeof(*k));
-                    if (-1 == pthread_create(&tid, 0, request_resolv_blocking, k)) {
-                        ret = REQUEST_WRITE;
-                        state->status = status_general_SOCKS_server_failure;
-                        selector_set_interest_key(event, OP_WRITE);
-                         ((Session *) (event->data))->register_info.status = state->status;
-                    } else {
-                        ret = REQUEST_RESOLVE;
-                        printf("estoy en el request_process en el else! \n");
-                        // hasta que no resuelva el nombre, no hay que hacer nada
-                        selector_set_interest_key(event, OP_NOOP);
-                        memcpy( ((Session *) (event->data))->register_info.dest_addr.fdqn,
-                            state->request.dest_addr.fdqn,
-                            sizeof(state->request.dest_addr.fdqn));
-                         ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
-                    }
-                }
-                break;
-        default:
-            ret = REQUEST_WRITE;
-            state->status = status_address_type_not_supported;
-            selector_set_interest_key(event, OP_WRITE);
-        }
-            break;
-        break;
-    case socks_req_cmd_bind:
-    // Unsupported
-    case socks_req_cmd_associate:
+        //{
+            // selector_key *k = malloc(sizeof(*event));
+            //     if (k == NULL) {
+            //         ret = REQUEST_WRITE;
+            //         state->status = status_general_SOCKS_server_failure;
+            //         selector_set_interest_key(event, OP_WRITE);
+            //     } else {
+                    // memcpy(k, event, sizeof(*k));
+                    // if (-1 == pthread_create(&tid, 0, request_resolv_blocking, k)) {
+                    //     ret = REQUEST_WRITE;
+                    //     state->status = status_general_SOCKS_server_failure;
+                    //     selector_set_interest_key(event, OP_WRITE);
+                    //     ((Session *) (event->data))->register_info.status = state->status;
+                    // } else {
+                    //     ret = REQUEST_RESOLVE;
+                    //     // hasta que no resuelva el nombre, no hay que hacer nada
+                    //     selector_set_interest_key(event, OP_NOOP);
+                    //     memcpy(((Session *) (event->data))->register_info.dest_addr.fdqn,state->request.dest_addr.fdqn,sizeof(state->request.dest_addr.fdqn));
+                    //     ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
+                     // }
+                 //}
+                 break;
+         }
+         //}
+         default:
+         {
+         //{
+             ret = REQUEST_WRITE;
+             state->status = status_address_type_not_supported;
+             selector_set_interest_key(event, OP_WRITE);
+         //}
+         }
+         }
+             break;
+         break;
+
+     case socks_req_cmd_bind:
+     // Unsupported
+     case socks_req_cmd_associate:
     // Unsupported
     default:
         state->status = status_command_not_supported;
         ret = REQUEST_WRITE;
         break;
     }
-
     return ret;
 }
-
-
 static unsigned request_read(selector_key * event) {
     request_st * state = &((Session *) (event->data))->client_header.request;
     unsigned ret = REQUEST_READ;
     bool error = false;
     uint8_t *ptr;
     size_t count;
-
     ptr = buffer_write_ptr(state->read_buff, &count);
     ssize_t n = recv(event->fd, ptr, count, 0);
     if (n > 0)
@@ -256,10 +225,8 @@ static unsigned request_read(selector_key * event) {
     }
     return error ? ERROR : ret;
 }
-
 static unsigned request_write(selector_key *event) {
     request_st *state = &((Session *) (event->data))->client_header.request;
-
     buffer *b = state->write_buff;
     unsigned ret = REQUEST_WRITE;
     uint8_t *ptr;
@@ -284,8 +251,6 @@ static unsigned request_write(selector_key *event) {
     }
     return ret;
 }
-
-
 static void request_connecting_arrival(const unsigned int st, selector_key *event)
 {
     connect_st *state = &((Session *) (event->data))->server_header.conect;
@@ -294,23 +259,19 @@ static void request_connecting_arrival(const unsigned int st, selector_key *even
     state->status = &((Session *) (event->data))->client_header.request.status;
     state->write_buff= &((Session *) (event->data))->output;
 }
-
-
-static unsigned request_connect(selector_key *event, request_st *state){
+static unsigned request_connect(selector_key *event, request_st *state)
+{
     bool error = false;
     bool fd_registered = false;
     struct Session *session = ((Session *) (event->data));
     int *fd = &state->server.fd;
-
     if(*fd != -1) {
         fd_registered = true;
-
         if(close(*fd) == -1) {
             error = true;
             goto finally;
         }
     }
-
     unsigned ret = REQUEST_CONNECTING;
     *fd = socket(session->server.domain, SOCK_STREAM, 0);
     session->server.fd = *fd;
@@ -319,12 +280,10 @@ static unsigned request_connect(selector_key *event, request_st *state){
         error = true;
         goto finally;
     }
-
     if (selector_fd_set_nio(*fd) == -1)
     {
         goto finally;
     }
-
     if (connect(*fd, (const struct sockaddr *)&session->server.address,
                session->server.address_len)  == -1)
     {
@@ -342,7 +301,6 @@ static unsigned request_connect(selector_key *event, request_st *state){
             else {
                 st = selector_set_interest(event->s, *fd, OP_WRITE);
             }
-
             if (st != SELECTOR_SUCCESS)
             {
                 error = true;
@@ -351,21 +309,34 @@ static unsigned request_connect(selector_key *event, request_st *state){
         }
         else
         {
-            error = true;
+            session->client_header.request.status = errno_to_socks(errno);
+            if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
+            {
+                selector_set_interest(event->s, session->client.fd, OP_WRITE);
+                selector_status st = selector_register(event->s, *fd, &client_handler_request, OP_NOOP, event->data); // registro el nuevo fd pero lo seteo en NOOP porque no se pudo establecer la conexión
+                if (st != SELECTOR_SUCCESS)
+                {
+                    error = true;
+                    goto finally;
+                }
+                
+                ret = REQUEST_WRITE;
+            }
+            else {
+                error = true;
+            }
+            //((Session *) (event->data))->socks_info.status = data->client.request.status;   
             goto finally;
         }
     }
-
 finally:
     return error ? ERROR : ret;
 }
-
 static unsigned request_connecting(selector_key *event)
 {
     int error;
     socklen_t len = sizeof(error);
     unsigned ret = REQUEST_CONNECTING;
-
     struct Session *session = ((Session *) (event->data));
     int *fd = &session->server.fd;
     int ret_sock = getsockopt(*fd, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -377,28 +348,7 @@ static unsigned request_connecting(selector_key *event)
         {
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
-        } else {
-            if (session->origin_resolution_current != NULL) {
-                session->origin_resolution_current =
-                    session->origin_resolution_current->ai_next;
-                if (session->origin_resolution_current != NULL) {
-                    session->server.domain = session->origin_resolution_current->ai_family;
-                    session->server.address_len =
-                        session->origin_resolution_current->ai_addrlen;
-                    memcpy(&session->server.address,
-                           session->origin_resolution_current->ai_addr,
-                           session->origin_resolution_current->ai_addrlen);
-
-                    return request_connect(event, &session->client_header.request);
-                }
-            }
-            session->client_header.request.status = errno_to_socks(error);
-            selector_set_interest_key(event, OP_NOOP);
-             ((Session *) (event->data))->register_info.status =
-                session->client_header.request.status;
         }
-        //freeaddrinfo(session->origin_resolution);
-        session->origin_resolution = 0;
         if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
         {
             selector_set_interest(event->s, *session->server_header.conect.origin_fd, OP_READ);
