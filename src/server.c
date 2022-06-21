@@ -76,6 +76,7 @@ int main(const int argc, char **argv) {
     struct sockaddr_in prawtos_addr;
     prawtos_addr.sin_family = AF_INET;
     inet_pton(AF_INET,args.mng_addr,&prawtos_addr.sin_addr);
+    printf("%s\n", args.mng_addr);
     prawtos_addr.sin_port = htons(args.mng_port);
 
     setsockopt(prawtos_fd, SOL_SOCKET, SO_REUSEADDR, &(int) {1}, sizeof(int));

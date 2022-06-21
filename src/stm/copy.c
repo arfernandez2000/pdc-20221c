@@ -67,7 +67,7 @@ static copy_st *copy_ptr(selector_key *event)
 }
 
 static bool origin_fd(selector_key * event){
-    return event->fd ==  &((Session *) (event->data))->server.fd;
+    return event->fd ==  ((Session *) (event->data))->server.fd;
 }
 
 static void pop3sniff(selector_key *event, uint8_t *ptr, ssize_t size){

@@ -1,6 +1,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "../include/pop3sniff.h"
+#include "../include/register.h"
 
 #define INITIAL_SIZE 50
 
@@ -156,7 +157,7 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
     if (sniff->state == POP3_SUCCESS) {
         strcpy(logger->user, sniff->username);
         strcpy(logger->passwd, sniff->password);
-        log_sniff(sniff);
+        log_sniff(logger);
     }
     return sniff->state;
 }
