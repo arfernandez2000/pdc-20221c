@@ -308,3 +308,18 @@ quit_marshal(buffer *b, const enum prawtos_response_status status){
 
     return len;
 }
+
+int 
+sniff_marshal(buffer *b, const enum prawtos_response_status status){
+    size_t count, len = 1;
+    uint8_t * ptr = buffer_write_ptr(b, &count);
+    
+    if(count < len){
+        return -1;
+    }
+
+    ptr[0] = status;
+    buffer_write_adv(b, len);
+
+    return len;
+}

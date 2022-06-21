@@ -241,7 +241,7 @@ void first_message(int fd, socks5args *args) {
 
 static void print_options() {
     //system("clear");
-    printf("GET: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n   4: List all users\n\nSET: \n   5: Add user\n   6: Add user admin\n   7: Remove user\n   8: Change user password\n   9: Enable/disable password sniffer\n\n10 - Quit\n\n");
+    printf("METRICS: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n\nUSERS: \n   4: List all users\n   5: Add user\n   6: Add user admin\n   7: Remove user\n   8: Change user password\n\n   9 - Enable/disable password sniffer\n   10 - Quit\n\n");
     
 }
 
@@ -448,20 +448,30 @@ void set_sniffer(int fd) {
         confirm = getchar();
     } while (confirm != '1' && confirm != '2');
 
-    // uint8_t request[2];
-    // request[0] = 0x00;
-    // if(confirm == '1')
-    //     request[1] = 0x00;
-    // else
-    //     request[1] = 0x01;
-    // send(fd, request, 2, 0);
+    uint8_t request[2];
+    request[0] = 0x00;
+    if(confirm == '1')
+        request[1] = 0x00;
+    else
+        request[1] = 0x01;
+    send(fd, request, 2, 0);
 
-    // int n = recv(fd, request, 1, 0);
+    uint8_t answer[2];
+    int n = recv(fd, answer, 1, 0);
 
-    // if(n != 1) {
-    //     printf("recv failed\n");
-    //     exit(1);
-    // }
+    if(n != 1) {
+        printf("recv failed\n");
+        exit(1);
+    }
+
+    switch(answer[1]) {
+        case 0x00:
+            printf("\nPOP3 is not available\n\n");
+            break;
+        default:
+            printf("\nServer failure\n\n");
+            break;
+        }
 
     // printf("Quit success");
 

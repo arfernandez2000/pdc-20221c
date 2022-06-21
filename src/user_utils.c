@@ -8,9 +8,9 @@ static user_list * list = NULL;
 
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
-    add_user("admin2", 7, "alggo2", 7, true);
-    add_user("admin", 6, "alggo", 6, true);
-    add_user("pruebita", 9, "pruebita", 9, true);
+    add_user("admin1", 7, "admin1", 7, true);
+    add_user("admin2", 7, "admin2", 7, true);
+
 }
 
 static User * add_user_rec(User * first, char* username, uint8_t ulen, char* password, uint8_t plen, bool admin, bool * added) {
