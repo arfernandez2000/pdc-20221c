@@ -50,6 +50,7 @@ void prawtos_passive_accept(selector_key* key);
 static void initialize_users();
 
 
+
 int main(const int argc, char **argv) {
 
     static bool done = false;
@@ -66,14 +67,16 @@ int main(const int argc, char **argv) {
     selector_status ss = SELECTOR_SUCCESS;
     fd_selector selector = init_selector();
 
-    if(selector == NULL)
+    if(selector == NULL){
+        free(selector);
         return -1;
+    }
     
     initialize_socks5(&args, selector);
 
     listen_interfaces(selector);
 
-    int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int prawtos_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_SCTP);
     struct sockaddr_in prawtos_addr;
     prawtos_addr.sin_family = AF_INET;
     inet_pton(AF_INET,args.mng_addr,&prawtos_addr.sin_addr);
@@ -86,19 +89,20 @@ int main(const int argc, char **argv) {
     if (bind(prawtos_fd, (struct sockaddr *)&prawtos_addr, sizeof(prawtos_addr)) < 0)
     {
         perror("unable to bind configuration socket");
-        return -1;
+        goto finally;
     }
     
     if (listen(prawtos_fd, MAX_PENDING_CONNECTIONS) < 0)
     {
         perror("unable to listen on configuration socket");
-        return -1;
+        goto finally;
+
     }
 
     if (selector_fd_set_nio(prawtos_fd) == -1)
     {
         perror("setting server configuration socket as non-blocking");
-        return -1;
+        goto finally;
     }
 
 
@@ -149,10 +153,39 @@ int main(const int argc, char **argv) {
     for(;!done;) {
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {
-            perror("Fallo en el while 1");
+            perror("Fallo en el selector");
+            goto finally;
         }
     }
 
+    if(selector!=NULL)
+        selector_destroy(selector);
+    selector_close();
+    if(prawtos_fd > 0)
+        close(prawtos_fd);
+
+finally:
+
+    if(selector != NULL) {
+        selector_destroy(selector);
+    }
+    
+    selector_close();
+
+    if(serverHandler.ipv4Fd >= 0) {
+        close(serverHandler.ipv4Fd);
+    }
+
+    if(serverHandler.ipv6Fd >= 0) {
+        close(serverHandler.ipv6Fd);
+    }
+
+    if(prawtos_fd >=0){
+        close(prawtos_fd);
+    };
+
+    return -1;
+       
 }
 
 static fd_selector init_selector(){

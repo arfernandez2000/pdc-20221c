@@ -13,15 +13,15 @@ void auth_prawtos_init(const unsigned int st, selector_key * key){
     auth_parser_init(&state->parser);
 }
 
-uint8_t check_credentials(const auth_st *state){
-    if(user_check_credentials((char*)state->auth.uname, (char*)state->auth.passwd) == 0)
-        return AUTH_SUCCESS;
-    return AUTH_BAD_CREDENTIALS;
+uint8_t check_prawtos_credentials(const auth_st *state){
+    return user_check_credentials((char*)state->auth.uname, (char*)state->auth.passwd, 0);
 }
 
 unsigned auth_prawtos_process(auth_st * state){
     unsigned ret = AUTH_WRITE_PRAWTOS;
-    uint8_t status = check_credentials(state);
+
+    uint8_t status = check_prawtos_credentials(state);
+    
     if(auth_marshal(state->write_buff,status) == -1){
         ret = ERROR_PRAWTOS;
     }

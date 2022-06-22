@@ -257,4 +257,7 @@ user_marshal(buffer *b, const enum prawtos_response_status status);
 int 
 quit_marshal(buffer *b, const enum prawtos_response_status status);
 
+int 
+sniff_marshal(buffer *b, const enum prawtos_response_status status);
+
 #endif

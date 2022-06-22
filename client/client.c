@@ -118,9 +118,7 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in socket_addr;
 
-    // fprintf(stdout, "connect_ipv4\n");
-    
-    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock = socket(PF_INET, SOCK_STREAM, IPPROTO_SCTP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -136,10 +134,8 @@ static int connect_by_ipv4(struct in_addr ip, in_port_t port) {
     
     do {
        answer = connect(sock, (struct sockaddr*) &socket_addr, sizeof(socket_addr));
-    //    fprintf(stdout, "connect: %d\n", errno);
     } while(answer == -1 && errno != EINTR);
 
-    // fprintf(stdout, "answer: %d\n", answer);
     // En el caso de que se pudo crear la conexion pero se cierra por razones ajenas
     if(answer == -1){
         close(sock);
@@ -152,7 +148,7 @@ static int connect_by_ipv6(struct in6_addr ip, in_port_t port) {
     int sock;
     struct sockaddr_in6 socket_addr;
     
-    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    sock = socket(PF_INET6, SOCK_STREAM, IPPROTO_SCTP);
     if (sock == -1) {
         printf("Error in socket creation \n");
         return -1;
@@ -217,6 +213,7 @@ void first_message(int fd, socks5args *args) {
 
         send(fd, message, 3 + name_len + password_len, MSG_NOSIGNAL);
         uint8_t answer[2];
+
         recv(fd, answer, 2, 0);
         
         // El primer byte de la respuesta se ignora
@@ -226,15 +223,15 @@ void first_message(int fd, socks5args *args) {
                 logged_in = true;
                 break;
             case 0x01:
-                printf("\nServer failure\n");
+                printf("\nIncorrect password. Please try again\n");
                 exit(1);
                 break;
             case 0x02:
-                printf("\nVersion not supported\n");
+                printf("\nNo user found. Please try again\n");
                 exit(1);
                 break;
             case 0x03:
-                printf("\nIncorrect username or password. Please try again\n");
+                printf("\nAccess denied: user is not an admin\n");
                 exit(1);
                 break;
         }
@@ -244,7 +241,7 @@ void first_message(int fd, socks5args *args) {
 
 static void print_options() {
     //system("clear");
-    printf("GET: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n   4: List all users\n\nSET: \n   5: Add user\n   6: Add user admin\n   7: Remove user\n   8: Change user password\n   9: Enable/disable password sniffer\n\n10 - Quit\n\n");
+    printf("METRICS: \n   1: Total bytes transfered \n   2: Historical connections\n   3: Concurrent connections\n\nUSERS: \n   4: List all users\n   5: Add user\n   6: Add user admin\n   7: Remove user\n   8: Change user password\n\n   9 - Enable/disable password sniffer\n   10 - Quit\n\n");
     
 }
 
@@ -451,20 +448,30 @@ void set_sniffer(int fd) {
         confirm = getchar();
     } while (confirm != '1' && confirm != '2');
 
-    // uint8_t request[2];
-    // request[0] = 0x00;
-    // if(confirm == '1')
-    //     request[1] = 0x00;
-    // else
-    //     request[1] = 0x01;
-    // send(fd, request, 2, 0);
+    uint8_t request[2];
+    request[0] = 0x00;
+    if(confirm == '1')
+        request[1] = 0x00;
+    else
+        request[1] = 0x01;
+    send(fd, request, 2, 0);
 
-    // int n = recv(fd, request, 1, 0);
+    uint8_t answer[2];
+    int n = recv(fd, answer, 1, 0);
 
-    // if(n != 1) {
-    //     printf("recv failed\n");
-    //     exit(1);
-    // }
+    if(n != 1) {
+        printf("recv failed\n");
+        exit(1);
+    }
+
+    switch(answer[1]) {
+        case 0x00:
+            printf("\nPOP3 is not available\n\n");
+            break;
+        default:
+            printf("\nServer failure\n\n");
+            break;
+        }
 
     // printf("Quit success");
 

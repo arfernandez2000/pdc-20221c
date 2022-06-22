@@ -39,9 +39,9 @@ user(char *s, struct users *user) {
 
 static void
 version(void) {
-    fprintf(stderr, "Prawtos version 0.0\n"
+    fprintf(stderr, "Prawtos version 0.1\n"
                     "ITBA Protocolos de Comunicación 2022/1 -- Grupo 02\n"
-                    "Tiene autorización para correr el protocolo Prawtos versión 0.0\n");
+                    "Tiene autorización para correr el protocolo Prawtos versión 0.1\n");
 }
 
 static void
@@ -55,7 +55,7 @@ usage(const char *progname) {
         "   -p <SOCKS port>  Puerto entrante conexiones SOCKS.\n"
         "   -P <conf port>   Puerto entrante conexiones configuracion\n"
         "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el proxy. Hasta 10.\n"
-        "   -v               Imprime información sobre la versión versión y termina.\n"
+        "   -v               Imprime información sobre la versión del protocolo Prawtos y termina.\n"
         "   -N               Deshabilita los passwords disectors."
         "\n",
         progname);

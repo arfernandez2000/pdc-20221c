@@ -2,25 +2,26 @@
 #include "../../include/stm_initialize.h"
 #include <string.h>
 
-static void auth_arrival(unsigned int st, selector_key * event)
+void auth_arrival(unsigned int st, selector_key * event)
 {
     auth_st* state = &((Session *) (event->data))->client_header.auth;
     state->read_buff = &((Session *) (event->data)) ->input;
     state->write_buff =  &((Session *) (event->data)) ->output;
-    // auth_parser_init(&state->parser);
-    // &((Session *) (event->date))->client_information->user->username = &state->parser.username;
-    // &((Session *) (event->date))->client_information->user->password = &state->parser.password;
+    state->parser.auth = &state->auth;
+    auth_parser_init(&state->parser);
 }
 
-static unsigned auth_process(const struct auth_st *state) {
+uint8_t check_credentials(const auth_st *state){
+    return user_check_credentials((char*)state->auth.uname, (char*)state->auth.passwd, 1);
+}
+
+unsigned auth_process(const struct auth_st *state) {
     unsigned ret = AUTH_WRITE;
-    
-    //TODO: habria que validar que las credentials sean validas
-    // Esta escrito por el coda
-    // uint8_t credential_status = validate_credentials(state);
+
+    uint8_t status = check_credentials(state);
 
     uint8_t method = state->method;
-    if (-1 == auth_marshal(state->write_buff, method)) {
+    if (-1 == auth_marshal(state->write_buff, status)) {
         ret = ERROR;
     }
     if (method == METHOD_NO_ACCEPTABLE_METHODS) {
@@ -30,7 +31,7 @@ static unsigned auth_process(const struct auth_st *state) {
     return ret;
 }
 
-static unsigned auth_read(selector_key* event) {
+unsigned auth_read(selector_key* event) {
     struct auth_st * state = &((Session *) (event->data))->client_header.auth;
     unsigned ret = AUTH_READ;
     bool error = false;
@@ -64,7 +65,7 @@ static unsigned auth_read(selector_key* event) {
     return error ? ERROR : ret;
 }
 
-static unsigned auth_write(selector_key *event) {
+unsigned auth_write(selector_key *event) {
     struct auth_st * state = &((Session *) (event->data))->client_header.auth;
     unsigned ret = AUTH_WRITE;
     uint8_t *ptr;

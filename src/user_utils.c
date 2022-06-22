@@ -3,14 +3,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "../include/parser/auth_parser.h"
 static user_list * list = NULL;
 
 void init_user_list( void ){
 	list = calloc(1, sizeof(user_list));
-    add_user("admin2", 7, "alggo2", 7, true);
-    add_user("admin", 6, "alggo", 6, true);
-    add_user("pruebita", 9, "pruebita", 9, true);
+    add_user("admin1", 7, "admin1", 7, true);
+    add_user("admin2", 7, "admin2", 7, true);
+
 }
 
 static User * add_user_rec(User * first, char* username, uint8_t ulen, char* password, uint8_t plen, bool admin, bool * added) {
@@ -130,16 +130,22 @@ int get_nusers() {
     return list->size;
 }
 
-int user_check_credentials(char* uname, char* passwd){
+int user_check_credentials(char* uname, char* passwd, int public){
     User * current = list->first;
 
     while (current != NULL) {
-        if(strcmp(uname, current->username) == 0 && strcmp(passwd, current->password) == 0 && current->is_admin == true){
-            return 0;
+        if(strcmp(uname, current->username) == 0) {
+            if(strcmp(passwd, current->password) == 0){
+                if(current->is_admin == true || public == 1)
+                    return AUTH_SUCCESS;
+                else
+                    return AUTH_NOT_AUTHORIZED;
+            } else
+                return AUTH_BAD_CREDENTIALS;
         }
         current = current->next;
     }
-    return 1;   
+    return AUTH_NO_USER;   
 }
 
 

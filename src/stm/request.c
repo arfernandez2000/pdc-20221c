@@ -157,7 +157,6 @@ static void request_arrival(const unsigned st, selector_key * event)
 
 static unsigned request_process(selector_key * event, struct request_st * state)
 {
-    //pthread_t tid;
     unsigned ret = REQUEST_CONNECTING;
 
     switch (state->request.cmd)
@@ -198,29 +197,30 @@ static unsigned request_process(selector_key * event, struct request_st * state)
             break;
         }
         case socks_addr_type_domain:
-        //{
-            // selector_key *k = malloc(sizeof(*event));
-            //     if (k == NULL) {
-            //         ret = REQUEST_WRITE;
-            //         state->status = status_general_SOCKS_server_failure;
-            //         selector_set_interest_key(event, OP_WRITE);
-            //     } else {
-                    // memcpy(k, event, sizeof(*k));
-                    // if (-1 == pthread_create(&tid, 0, request_resolv_blocking, k)) {
-                    //     ret = REQUEST_WRITE;
-                    //     state->status = status_general_SOCKS_server_failure;
-                    //     selector_set_interest_key(event, OP_WRITE);
-                    //     ((Session *) (event->data))->register_info.status = state->status;
-                    // } else {
-                    //     ret = REQUEST_RESOLVE;
-                    //     // hasta que no resuelva el nombre, no hay que hacer nada
-                    //     selector_set_interest_key(event, OP_NOOP);
-                    //     memcpy(((Session *) (event->data))->register_info.dest_addr.fdqn,state->request.dest_addr.fdqn,sizeof(state->request.dest_addr.fdqn));
-                    //     ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
-                    // }
-                //}
+        // {
+        //     pthread_t thr;
+        //     selector_key *k = malloc(sizeof(*k));
+        //         if (k == NULL) {
+        //            ret = REQUEST_WRITE;
+        //            state->status = status_general_SOCKS_server_failure;
+        //            selector_set_interest_key(event, OP_WRITE);
+        //         } else {
+        //             memcpy(k, event, sizeof(*k));
+        //             if (-1 == pthread_create(&thr, 0, request_resolv_blocking, k)) {
+        //                 ret = REQUEST_WRITE;
+        //                 state->status = status_general_SOCKS_server_failure;
+        //                 selector_set_interest_key(event, OP_WRITE);
+        //                 ((Session *) (event->data))->register_info.status = state->status;
+        //             } else {
+        //                 ret = REQUEST_RESOLVE;
+        //                 // hasta que no resuelva el nombre, no hay que hacer nada
+        //                 selector_set_interest_key(event, OP_NOOP);
+        //                 memcpy(((Session *) (event->data))->register_info.dest_addr.fdqn,state->request.dest_addr.fdqn,sizeof(state->request.dest_addr.fdqn));
+        //                 ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
+        //             }
+        //         }
                 break;
-        //}
+        // }
         default:
         //{
             ret = REQUEST_WRITE;

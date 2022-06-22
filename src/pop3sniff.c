@@ -152,6 +152,7 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
         pop3_parse(sniff,b);
     }
     if (sniff->state == POP3_SUCCESS) {
+        fprintf(stdout, "en success\n");
         strcpy(logger->user, sniff->username);
         strcpy(logger->passwd, sniff->password);
         log_sniff(logger);

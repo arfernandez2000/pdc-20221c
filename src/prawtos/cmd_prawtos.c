@@ -117,6 +117,11 @@ static unsigned cmd_process(cmd_prawtos_st * state){
             ret = ERROR_PRAWTOS;
         }
         break;
+    case 0x02:
+        if(sniff_marshal(state->write_buff,success) == -1){
+            ret = ERROR_PRAWTOS;
+        }
+        break;
     case 0x03:
         state->status = success;
         if(quit_marshal(state->write_buff,state->status) == -1){
