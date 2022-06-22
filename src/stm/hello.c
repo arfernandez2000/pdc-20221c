@@ -49,7 +49,7 @@ static unsigned hello_read(selector_key * event){
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_WRITE))
             {
                 ret = hello_process(state);
-                // ((Session *) (event->data))->socks_info.method = state->method;
+                ((Session *) (event->data))->register_info.method = state->method;
             }
             else
             {

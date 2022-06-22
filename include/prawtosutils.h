@@ -48,6 +48,8 @@ struct prawtos {
 
     state_machine stm;
 
+    register_st register_info;
+
     union{
         auth_st auth;
         cmd_prawtos_st cmd;

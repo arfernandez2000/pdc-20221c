@@ -32,7 +32,7 @@ enum pop3sniff_st
 
 typedef struct register_st{
     uint8_t method;
-    User user_info;
+    auth user_info;
     enum socks_response_status status;
     enum socks_addr_type atyp;
     struct sockaddr_storage client_addr;

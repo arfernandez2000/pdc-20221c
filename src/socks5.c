@@ -35,7 +35,7 @@ void initialize_socks5(socks5args args,fd_selector selector) {
 
 void new_connection_ipv4(selector_key *event) {
 
-    struct sockaddr_in cli_address;
+    struct sockaddr_storage cli_address;
     socklen_t clilen = sizeof(cli_address);
 
     int fd;
@@ -57,6 +57,8 @@ void new_connection_ipv4(selector_key *event) {
     session->server.fd = -1;
 
     memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
+    session->client.address_len = clilen;
+    session->register_info.client_addr = cli_address;
 
     selector_register(event->s, session->client.fd, &client_handler, OP_READ, session);
 
@@ -65,7 +67,7 @@ void new_connection_ipv4(selector_key *event) {
 
 void new_connection_ipv6(selector_key *event) {
 
-    struct sockaddr_in6 cli_address;
+    struct sockaddr_storage cli_address;
     socklen_t clilen = sizeof(cli_address);
 
     int fd;
@@ -88,6 +90,8 @@ void new_connection_ipv6(selector_key *event) {
     session->server.fd = -1;
 
     memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
+    session->client.address_len = clilen;
+    session->register_info.client_addr = cli_address;
 
     selector_register(event->s, session->client.fd, &client_handler, OP_READ, session);
     
@@ -99,7 +103,7 @@ static Session* initialize_session() {
     if(session == NULL){
         return NULL;
     }
-    memset(session, 0x05, sizeof(*session));
+    memset(session, 0x00, sizeof(*session));
 
     uint8_t *inputBuffer = malloc(inputBufferSize*sizeof(*inputBuffer));
     if(inputBuffer == NULL){

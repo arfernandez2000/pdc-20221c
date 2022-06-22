@@ -29,7 +29,7 @@ static char* user_to_string(register_st * socks_info){
         return "----";
     }
     else{
-        return (char*) socks_info->user_info.username;
+        return (char*) socks_info->user_info.uname;
     }
 }
 
@@ -70,7 +70,7 @@ static void print_log(register_st *register_info, char type) {
     uint8_t * ptr = buffer_write_ptr(&write_data->write_buff,&count);
     int n = 0;
     if(type == 'A') {
-        print = "[%s]\t%s\tA\t%s\t%u\t%s\t%u\tstatus=%d\n";
+        print = "[%s]\t%s\tACC\t%s\t%u\t%s\t%u\tstatus=%d\n";
         n = snprintf((char*)ptr,count,print, date, user_to_string(register_info), ret, ntohs(addr_port(register_info->client_addr)), dest_ip, ntohs(register_info->dest_port),register_info->status);
     }
     else if(type == 'P') {

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <string.h>
+#include "../../include/register.h"
 //#include <pthread.h>
 
 static void request_arrival(const unsigned st, selector_key * event);
@@ -161,6 +163,7 @@ static unsigned request_process(selector_key * event, struct request_st * state)
     switch (state->request.cmd)
     {
     case socks_req_cmd_connect:
+        ((Session *) (event->data))->register_info.atyp = state->request.dest_addr_type;
         switch (state->request.dest_addr_type)
         {
         case socks_addr_type_ipv4:
@@ -170,6 +173,11 @@ static unsigned request_process(selector_key * event, struct request_st * state)
             ((Session *) (event->data))->server.address_len = sizeof(state->request.dest_addr.ipv4);
             memcpy(&((Session *) (event->data))->server.address, &state->request.dest_addr,
                    sizeof(state->request.dest_addr.ipv4));
+
+            memcpy(&((Session *) (event->data))->register_info.dest_addr, &state->request.dest_addr,
+                   sizeof(state->request.dest_addr));
+            ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
+
             ret = request_connect(event, state);
             break;
         }
@@ -180,6 +188,12 @@ static unsigned request_process(selector_key * event, struct request_st * state)
             ((Session *) (event->data))->server.address_len = sizeof(state->request.dest_addr.ipv6);
             memcpy(&((Session *) (event->data))->server.address, &state->request.dest_addr,
                    sizeof(state->request.dest_addr.ipv6));
+
+            memcpy(&((Session *) (event->data))->register_info.dest_addr, &state->request.dest_addr,
+                   sizeof(state->request.dest_addr));
+            ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
+
+
             ret = request_connect(event, state);
             break;
         }
@@ -278,6 +292,7 @@ static unsigned request_write(selector_key *event) {
             else {
                 ret = ERROR;
             }
+            log_access(&((Session *) (event->data))->register_info);
         }
     }
     return ret;
@@ -366,7 +381,7 @@ static unsigned request_connect(selector_key *event, request_st *state)
             else {
                 error = true;
             }
-            //((Session *) (event->data))->socks_info.status = data->client.request.status;   
+            ((Session *) (event->data))->register_info.status = session->client_header.request.status;   
             goto finally;
         }
     }
@@ -392,6 +407,16 @@ static unsigned request_connecting(selector_key *event)
         {
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
+        // } else {
+        //     session->client_header.request.status = errno_to_socks(error);
+
+        //     if(SELECTOR_SUCCESS != selector_set_interest_key(event, OP_NOOP)) {
+        //         return ERROR;
+        //     }
+        //     ((Session *) (event->data))->register_info.status = session->client_header.request.status;
+        //     log_access(&((Session *) (event->data))->socks_info);
+
+        //     return REQUEST_RESOLVE;
         }
         if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
         {
@@ -402,7 +427,7 @@ static unsigned request_connecting(selector_key *event)
         else {
             ret = ERROR;
         }
-        //ATTACHMENT(key)->socks_info.status = data->client.request.status;    
+        ((Session *) (event->data))->register_info.status = session->client_header.request.status;    
     }
     return ret;
 }

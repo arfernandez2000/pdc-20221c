@@ -117,6 +117,8 @@ void prawtos_passive_accept(selector_key * key) {
 
     memcpy(&state->client_addr, &client_addr, client_addr_len);
     state->client_addr_len = client_addr_len;
+    state->register_info.client_addr = client_addr;
+    
     if (SELECTOR_SUCCESS != selector_register(key->s, client, &prawtos_handler, OP_READ, state))
     {
         goto error;

@@ -1,5 +1,6 @@
 #include "../../include/socks5utils.h"
 #include "../../include/stm_initialize.h"
+#include <string.h>
 
 static void auth_arrival(unsigned int st, selector_key * event)
 {
@@ -46,7 +47,7 @@ static unsigned auth_read(selector_key* event) {
             if (SELECTOR_SUCCESS == selector_set_interest_key(event, OP_WRITE))
             {
                 ret = auth_process(state);
-                //memcpy(&ATTACHMENT(s_key)->socks_info.user_info,&d->parser.usr,sizeof(d->parser.usr));
+                memcpy(&((Session *) (event->data))->register_info.user_info, &state->parser.auth, sizeof(state->parser.auth));
                 
             }
             else{

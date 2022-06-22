@@ -24,7 +24,7 @@ void pop3_init(struct pop3_sniff* sniff){
     sniff->parsing = true;
 }
 
-static enum pop3sniff_st initial_msg(struct pop3_sniff* sniff,uint8_t b){
+static enum pop3sniff_st initial_msg(struct pop3_sniff* sniff, uint8_t b){
     enum pop3sniff_st state = POP3_INITIAL;
     if(tolower(b) == tolower(*(OK + sniff->read))){
         sniff->read++;
@@ -61,7 +61,7 @@ enum pop3sniff_st sniffer(struct pop3_sniff * sniff,uint8_t b, const char * snif
 
 enum pop3sniff_st read_user(struct pop3_sniff* sniff,uint8_t b){
     enum pop3sniff_st state = POP3_READ_USER;
-    if(b != '\n'){
+    if(b != '\n' && b != '\r'){
         if(sniff->read < MAX_SIZE_USER){
             sniff->username[sniff->read++] = b;
         }
@@ -79,7 +79,7 @@ enum pop3sniff_st read_user(struct pop3_sniff* sniff,uint8_t b){
 
 enum pop3sniff_st read_password(struct pop3_sniff* sniff,uint8_t b){
     enum pop3sniff_st state = POP3_READ_PASSWORD;
-    if(b != '\n'){
+    if(b != '\n' && b != '\r'){
         if(sniff->read < MAX_SIZE_USER){
             sniff->password[sniff->read++] = b;
         }
@@ -107,7 +107,6 @@ enum pop3sniff_st check(struct pop3_sniff* sniff,uint8_t b){
             state = POP3_USER;
         }
     }
-    fprintf(stdout, "saliendo de check con %d\n", state);
     return state;
 }
 
@@ -152,14 +151,9 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
         uint8_t b = buffer_read(&sniff->buffer);
         pop3_parse(sniff,b);
     }
-    fprintf(stdout, "despues del while\n");
     if (sniff->state == POP3_SUCCESS) {
         strcpy(logger->user, sniff->username);
         strcpy(logger->passwd, sniff->password);
-        fprintf(stdout, "en success\n");
-        //logger->user = sniff->username;
-        //logger->passwd = sniff->password;
-        printf(stdout, "after en success\n");
         log_sniff(logger);
     }
     return sniff->state;

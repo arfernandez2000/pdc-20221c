@@ -17,6 +17,7 @@
 #include "../include/prawtos.h"
 #include "../include/stadistics.h"
 #include "../include/user_utils.h"
+#include "../include/logger_write.h"
 
 #define DEFAULT_TIMEOUT 5
 #define SELECTOR_COUNT 1024
@@ -112,6 +113,39 @@ int main(const int argc, char **argv) {
     initialize_users();
 
     ss = selector_register(selector, prawtos_fd, &prawtos_handler, OP_READ, NULL);
+    
+    if (ss != SELECTOR_SUCCESS)
+    {
+        perror("registering ipv4 mng fd");
+        goto finally;
+    }
+
+    const struct fd_handler stdout_handler = {
+        .handle_read = NULL,
+        .handle_write = write_logger,
+        .handle_close = NULL,
+    };
+
+    if(-1 == init_logger(selector)){
+        perror("Unable to allocate write struct");
+        goto finally;
+    }
+
+    if (selector_fd_set_nio(1) == -1)
+    {
+        perror("setting stdout as non-blocking");
+        goto finally;
+    }
+
+    ss = selector_register(selector, 1, &stdout_handler, OP_NOOP, get_data_logger());
+
+    if (ss != SELECTOR_SUCCESS)
+    {
+        perror("registering write fd");
+        goto finally;
+    }
+
+
     for(;!done;) {
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {

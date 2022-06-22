@@ -104,14 +104,13 @@ void cmd_init(const unsigned int st, selector_key * key){
 static unsigned cmd_process(cmd_prawtos_st * state){
     unsigned ret = CMD_WRITE_PRAWTOS;
     switch (state->parser.type) {
-    case 0x00:
-        fprintf(stdout, "get!\n");
-        fprintf(stdout, "cmd: %d\n", state->get.cmd);
+    case 0x00: {
         int args_len = get_handlers[state->get.cmd](state);
         if(get_marshal(state->write_buff,state->status, state->get.cmd, state->nargs, state->args, args_len) == -1){
             ret = ERROR_PRAWTOS;
         }
         break;
+    }
     case 0x01:
         user_handlers[state->user.cmd](state);
         if(user_marshal(state->write_buff,state->status) == -1){
