@@ -10,6 +10,8 @@ static const char * USER = "USER ";
 static const char * PASSWORD = "PASS ";
 static const char * ERROR_SNIFF = "-ERR";
 
+bool enable = true;
+
 static void reset(struct pop3_sniff* sniff, uint8_t left){
     sniff->read = 0;
     sniff->remaining = left;
@@ -152,10 +154,17 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
         pop3_parse(sniff,b);
     }
     if (sniff->state == POP3_SUCCESS) {
-        fprintf(stdout, "en success\n");
         strcpy(logger->user, sniff->username);
         strcpy(logger->passwd, sniff->password);
         log_sniff(logger);
     }
     return sniff->state;
+}
+
+void set_enable(bool new_value){
+    enable = new_value;
+}
+
+bool get_enable() {
+    return enable == true;
 }

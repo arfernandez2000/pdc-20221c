@@ -4,6 +4,7 @@
 #include "../../include/prawtosutils.h"
 #include "../../include/stadistics.h"
 #include "../../include/user_utils.h"
+#include "../../include/socks5utils.h"
 
 typedef int (*cmd_options)(cmd_prawtos_st *state);
 
@@ -118,6 +119,10 @@ static unsigned cmd_process(cmd_prawtos_st * state){
         }
         break;
     case 0x02:
+        if(state->get.cmd == 0)
+            set_enable(true);
+        else 
+            set_enable(false);
         if(sniff_marshal(state->write_buff,success) == -1){
             ret = ERROR_PRAWTOS;
         }

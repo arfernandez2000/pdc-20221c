@@ -79,8 +79,6 @@ int main(int argc, char* argv[]) {
     //primero hay que pasar la informacion de texto
     //a binario con la funcion inet_pton()
     if(inet_pton(AF_INET, args.mng_addr, &ip_addr)) {
-        // fprintf(stdout, "ip_addr: %u\n", ip_addr.s_addr);
-        // fprintf(stdout, "args.mng_port: %d\n", args.mng_port);
         file_descriptor = connect_by_ipv4(ip_addr, htons(args.mng_port));
     } else if (inet_pton(AF_INET6, args.mng_addr, &ip_addr6)) {
         file_descriptor = connect_by_ipv6(ip_addr6, htons(args.mng_port));
@@ -94,9 +92,9 @@ int main(int argc, char* argv[]) {
         exit(1);
 	}
 
-    // signal(SIGTERM, sigterm_handler);
-    // signal(SIGINT, sigterm_handler);
-    // signal(SIGPIPE, sigterm_handler);
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGINT, sigterm_handler);
+    signal(SIGPIPE, sigterm_handler);
 
     clean_buffer();
     
@@ -449,7 +447,7 @@ void set_sniffer(int fd) {
     } while (confirm != '1' && confirm != '2');
 
     uint8_t request[2];
-    request[0] = 0x00;
+    request[0] = 0x02;
     if(confirm == '1')
         request[1] = 0x00;
     else
