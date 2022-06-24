@@ -119,14 +119,13 @@ static unsigned cmd_process(cmd_prawtos_st * state){
         }
         break;
     case 0x02:
-        if(state->get.cmd == 0)
-            set_enable(true);
-        else 
-            set_enable(false);
-        if(sniff_marshal(state->write_buff,success) == -1){
+        {
+        int status = set_enable(state->get.cmd);
+        if(sniff_marshal(state->write_buff,status) == -1){
             ret = ERROR_PRAWTOS;
         }
         break;
+        }
     case 0x03:
         state->status = success;
         if(quit_marshal(state->write_buff,state->status) == -1){

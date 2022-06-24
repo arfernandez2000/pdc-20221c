@@ -227,6 +227,8 @@ enum prawtos_response_status {
     type_not_supported,
     user_lens_error,
     user_credentia,
+    sniffer_already_on,
+    sniffer_already_off,
 };
 
 int 

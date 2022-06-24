@@ -188,7 +188,7 @@ bool pop3_parsing(struct pop3_sniff *sniff);
 
 enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st* logger);
 
-void set_enable(bool new_value);
+int set_enable(int new_value);
 
 bool get_enable();
 

@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include "../include/pop3sniff.h"
 #include "../include/register.h"
+#include "../include/parser/prawtos_parser.h"
 
 #define INITIAL_SIZE 50
 
@@ -161,8 +162,14 @@ enum pop3sniff_st pop3_consume(struct pop3_sniff *sniff, register_st *logger){
     return sniff->state;
 }
 
-void set_enable(bool new_value){
-    enable = new_value;
+int set_enable(int new_value){
+    if(new_value == 0 && enable == true)
+        return sniffer_already_on;
+    if(new_value == 1 && enable == false) {
+        return sniffer_already_off;
+    }
+    enable = !new_value;
+    return success;
 }
 
 bool get_enable() {

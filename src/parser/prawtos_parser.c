@@ -318,6 +318,8 @@ sniff_marshal(buffer *b, const enum prawtos_response_status status){
         return -1;
     }
 
+    fprintf(stdout, "status %d\n", status);
+
     ptr[0] = status;
     buffer_write_adv(b, len);
 

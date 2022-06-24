@@ -453,9 +453,15 @@ void set_sniffer(int fd) {
         exit(1);
     }
 
-    switch(answer[1]) {
+    switch(answer[0]) {
         case 0x00:
-            printf("\nPOP3 is not available\n\n");
+            printf("\nSniffer status changed\n\n");
+            break;
+        case 0x06:
+            printf("\nSniffer already on\n\n");
+            break;
+        case 0x07:
+            printf("\nSniffer already off\n\n");
             break;
         default:
             printf("\nServer failure\n\n");
