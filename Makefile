@@ -17,10 +17,10 @@ DEBUG_FLAGS = -Wall -Wextra -pedantic -pedantic-errors -pthread \
 all: server
 
 server: $(OFILES)
-	$(CC) $(OFILES) $(CFLAGS) -o server
+	$(CC) $(OFILES) $(CFLAGS) -o socks5d
 
 debug: 
-	$(CC) $(FILES) $(DEBUG_FLAGS) -o server
+	$(CC) $(FILES) $(DEBUG_FLAGS) -o socks5d
 
 client:
 	cd client; make all;
