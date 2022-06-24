@@ -8,7 +8,9 @@
 static void server_write(selector_key * event);
 static void server_read(selector_key * event);
 static void server_close(selector_key * event);
+static void server_done(selector_key * event);
 static void close_session(selector_key * event);
+static void server_block(selector_key *event);
 
 static Session* initialize_session();
 
@@ -26,12 +28,12 @@ void initialize_socks5(socks5args args,fd_selector selector) {
     client_handler.handle_read = client_read;
     client_handler.handle_write = client_write;
     client_handler.handle_close = client_close;
-    client_handler.handle_block = NULL;
+    client_handler.handle_block = server_block;
 
     server_handler.handle_read = server_read;
     server_handler.handle_write = server_write;
     server_handler.handle_close = server_close;
-    server_handler.handle_block = NULL;
+    server_handler.handle_block = server_block;
 
     // Aca habria que inicializar la maquina de estados.
     stm_map();
@@ -62,6 +64,7 @@ void new_connection_ipv4(selector_key *event) {
     session->server.fd = -1;
 
     memcpy(&session->client.address, (struct sockaddr *)&cli_address, clilen);
+    
     session->client.address_len = clilen;
     session->register_info.client_addr = cli_address;
 
@@ -110,70 +113,10 @@ static Session* initialize_session() {
     }
     memset(session, 0x00, sizeof(*session));
 
-    uint8_t *inputBuffer = malloc(inputBufferSize*sizeof(*inputBuffer));
-    if(inputBuffer == NULL){
-        free(session);
-        return NULL;
-    }
-        
-    uint8_t *outputBuffer = malloc(outputBufferSize*sizeof(*outputBuffer));
-    if(outputBuffer == NULL){
-        free(session);
-        free(inputBuffer);
-        return NULL;
-    }
-
-    // session->s_machine = (state_machine) malloc(sizeof(state_machine));
-    // if(session->s_machine == NULL){
-    //     free(session);
-    //     free(inputBuffer);
-    //     free(outputBuffer);
-    //     return NULL;
-    // }
-    // session->s_machine->states = malloc(sizeof(state_definition));
-    // if(session->s_machine->states == NULL){
-    //     free(session);
-    //     free(inputBuffer);
-    //     free(outputBuffer);
-    //     free(session->s_machine);
-    //     return NULL;
-    // }
-    // session->s_machine->current = malloc(sizeof(state_definition));
-    // if(session->s_machine->current == NULL){
-    //     free(session);
-    //     free(inputBuffer);
-    //     free(outputBuffer);
-    //     free(session->s_machine->states);
-    //     free(session->s_machine)
-    //     return NULL;
-    // }
-    // session->client_information = malloc(sizeof(Client));
-    // if(session->client_information == NULL){
-    //     free(session);
-    //     free(inputBuffer);
-    //     free(outputBuffer);
-    //     free(session->s_machine->states);
-    //     free(session->s_machine->current);
-    //     free(session->s_machine);
-    //     return NULL;
-    // }
-    // session->client = malloc(sizeof(Connection));
-    // if(session->client == NULL){
-    //     free(session);
-    //     free(inputBuffer);
-    //     free(outputBuffer);
-    //     free(session->s_machine->states);
-    //     free(session->s_machine->current);
-    //     free(session->s_machine);
-    //     free(session->client_information);
-    //     return NULL;
-    // }
-
-
-    buffer_init(&session->input, inputBufferSize, inputBuffer);
-    buffer_init(&session->output, outputBufferSize, outputBuffer);
+    session->references = 1;
+    buffer_init(&session->input, sizeof(session->raw_buff_a)/sizeof((session->raw_buff_a)[0]), session->raw_buff_a);
+    buffer_init(&session->output, sizeof(session->raw_buff_b)/sizeof((session->raw_buff_b)[0]), session->raw_buff_b);
     stm_create(&(session->s_machine));
-    // initialize_state_machine(&session->s_machine);
     
     
 
@@ -192,7 +135,7 @@ void client_write(selector_key * event){
 
     if (ERROR == st || DONE == st)
     {
-        close_session(event);
+        server_done(event);
     }
     
 }
@@ -204,17 +147,23 @@ void client_read(selector_key  *event)
 
     if (ERROR == st || DONE == st)
     {
-        close_session(event);
+        server_done(event);
     }
 }
 
 void client_close(selector_key *event){
     Session * session = (Session * ) event->data;
+    if(session->references == 1){
     
-    close(session->client.fd);
-    free(session->input.data);
-    free(session->output.data);
-    free(session);
+        if (session->origin_resolution != NULL) {
+            freeaddrinfo(session->origin_resolution);
+            session->origin_resolution = 0;
+        }
+        free(session);
+    }
+    else{
+        session->references -=1;
+    }
 }
     
 static void close_session(selector_key * event){
@@ -246,7 +195,7 @@ static void server_read(selector_key * event){
     }
     else {
         if(errno != EINTR) {
-            close_session(event);
+            server_done(event);
         }
     }
 }
@@ -254,6 +203,33 @@ static void server_read(selector_key * event){
 static void server_close(selector_key * event){
     //Session * session = (Session *) event->data;
     close(event->fd);
+}
+
+static void server_done(struct selector_key *event) {
+    const int fds[] = {
+        ((Session *) event->data)->client.fd,
+        ((Session *) event->data)->server.fd,
+    };
+
+    for (unsigned i = 0; i < (sizeof(fds)/sizeof(fds[0])); i++) {
+        if (fds[i] != -1) {
+            if (SELECTOR_SUCCESS != selector_unregister_fd(event->s, fds[i])) {
+                abort();
+            }
+            close(fds[i]);
+        }
+    }
+
+    stadistics_decrease_concurrent();
+}
+
+static void server_block(selector_key *event) {
+    struct state_machine *stm = &((Session *) event->data)->s_machine;
+    const enum session_state st = stm_handler_block(stm, event);
+
+    if (ERROR == st || DONE == st) {
+        server_done(event);
+    }
 }
 
 static void server_write(selector_key * event){
@@ -276,7 +252,7 @@ static void server_write(selector_key * event){
     }
     else{
         if(errno!=EINTR){
-            close_session(event);
+            server_done(event);
         }
     }   
 }

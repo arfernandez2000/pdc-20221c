@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include "../../include/register.h"
-//#include <pthread.h>
+#include <pthread.h>
 
 static void request_arrival(const unsigned st, selector_key * event);
 static unsigned request_process(selector_key * event, request_st * state);
@@ -15,7 +15,7 @@ static unsigned request_write(selector_key *event);
 static void request_connecting_arrival(const unsigned int st, selector_key *event);
 static unsigned request_connect(selector_key *event, request_st *state);
 static unsigned request_connecting(selector_key *event);
-//static unsigned request_resolve_done(selector_key *key);
+static unsigned request_resolve_done(selector_key *key);
 
 
 state_definition request_read_state_def(void) {
@@ -32,20 +32,20 @@ state_definition request_read_state_def(void) {
     return state_def;
 }
 
-// state_definition request_resolve_state_def(void){
+state_definition request_resolve_state_def(void){
 
-//     state_definition state_def = {
-//         .state = REQUEST_RESOLVE,
-//         .on_arrival = NULL,
-//         .on_read_ready = NULL,
-//         .on_write_ready = NULL,
-//         .on_block_ready = request_resolve_done,
-//         .on_departure = NULL,
-//     };
+    state_definition state_def = {
+        .state = REQUEST_RESOLVE,
+        .on_arrival = NULL,
+        .on_read_ready = NULL,
+        .on_write_ready = NULL,
+        .on_block_ready = request_resolve_done,
+        .on_departure = NULL,
+    };
 
-//     return state_def;
+    return state_def;
     
-// }
+}
 
 state_definition request_write_state_def(void) {
 
@@ -81,79 +81,81 @@ state_definition request_connecting_state_def(void) {
     return state_def;
 }
 
-// static void *request_resolv_blocking(void *data) {
-//     selector_key *key = (struct selector_key *)data;
-//     Session * state = ((Session *) (data));
 
-//     pthread_detach(pthread_self());
-//     state->origin_resolution = 0;
+static void *request_resolv_blocking(void *data) {
+    selector_key *key = (struct selector_key *)data;
+    Session * state = ((Session *) (key->data));
 
-//     struct addrinfo hints = {
-//         .ai_family = AF_UNSPEC,
-//         .ai_socktype = SOCK_STREAM,
-//         .ai_flags = AI_PASSIVE,
-//         .ai_protocol = 0,
-//         .ai_canonname = NULL,
-//         .ai_addr = NULL,
-//         .ai_next = NULL,
-//     };
+    pthread_detach(pthread_self());
+    state->origin_resolution = 0;
 
-//     char buff[7]; 
-//     snprintf(buff, sizeof(buff), "%d",
-//              ntohs(state->client_header.request.request.dest_port));
+    struct addrinfo hints = {
+        .ai_family = AF_UNSPEC,
+        .ai_socktype = SOCK_STREAM,
+        .ai_flags = AI_PASSIVE,
+        .ai_protocol = 0,
+        .ai_canonname = NULL,
+        .ai_addr = NULL,
+        .ai_next = NULL,
+    };
 
-//     if(getaddrinfo(state->client_header.request.request.dest_addr.fdqn, buff, &hints,&state->origin_resolution)==1){
-//                     perror("Error making getaddrinfo\n");
-//     }
-//     state->origin_resolution_current = state->origin_resolution;
+    char buff[7]; 
+    snprintf(buff, sizeof(buff), "%d",
+             ntohs(state->client_header.request.request.dest_port));
 
-//     selector_notify_block(key->s, key->fd);
+    if(getaddrinfo(state->client_header.request.request.dest_addr.fdqn, buff, &hints,
+                &state->origin_resolution) < 0) {
+        state->origin_resolution = NULL;
+    }
+    state->origin_resolution_current = state->origin_resolution;
 
-//     free(data);
+    selector_notify_block(key->s, key->fd);
 
-//     return 0;
-// }
+    free(data);
+    
+    return 0;
+}
 
 static void request_arrival(const unsigned st, selector_key * event)
 {
     request_st * state = &((Session *) (event->data))->client_header.request;
-    state->read_buff = &((Session *) (event->data))->input;
-    state->write_buff =  &((Session *) (event->data))->output;
+    state->read_buff = &(((Session *) (event->data))->input);
+    state->write_buff =  &(((Session *) (event->data))->output);
     state->parser.request = &state->request;
     state->status = status_general_SOCKS_server_failure;
     request_parser_init(&state->parser);
     
     state->client.fd = ((Session *) (event->data))->client.fd;
     state->server.fd =  ((Session *) (event->data))->server.fd;
-    state->server.address = ((Session *) (event->data)) ->server.address;
-    state->server.address_len = ((Session *) (event->data)) ->server.address_len;
-    state->server.domain = ((Session *) (event->data)) ->server.domain;
+    state->server.address = ((Session *) (event->data))->server.address;
+    state->server.address_len = ((Session *) (event->data))->server.address_len;
+    state->server.domain = ((Session *) (event->data))->server.domain;
 }
 
-// static unsigned request_resolve_done(selector_key *key) {
-//     struct request_st *d =  &((Session *) (key->data))->client_header.request;
-//     struct Session *s = ((Session *) (key->data));
-//     if (s->origin_resolution == 0) {
-//         d->status = status_host_unreachable;
-//         s->register_info.status = d->status;
-//         if (-1 != request_marshal(d->write_buff, d->status, d->request.dest_addr_type,
-//                                    d->request.dest_addr,
-//                                    d->request.dest_port)) {
-//             selector_set_interest(key->s, d->client.fd, OP_WRITE);
-//             return REQUEST_WRITE;
-//         } else {
-//             return ERROR;
-//         }
+static unsigned request_resolve_done(selector_key *key) {
+    struct request_st *d =  &((Session *) (key->data))->client_header.request;
+    struct Session *s = ((Session *) (key->data));
+    if (s->origin_resolution == 0) {
+        d->status = status_host_unreachable;
+        s->register_info.status = d->status;
+        if (-1 != request_marshal(d->write_buff, d->status, d->request.dest_addr_type,
+                                   d->request.dest_addr,
+                                   d->request.dest_port)) {
+            selector_set_interest(key->s, d->client.fd, OP_WRITE);
+            return REQUEST_WRITE;
+        } else {
+            return ERROR;
+        }
 
-//     } else {
-//         s->server.domain = s->origin_resolution_current->ai_family;
-//         s->server.address_len = s->origin_resolution_current->ai_addrlen;
-//         memcpy(&s->server.address, s->origin_resolution_current->ai_addr,
-//                s->origin_resolution_current->ai_addrlen);
-//     }
+    } else {
+        s->server.domain = s->origin_resolution_current->ai_family;
+        s->server.address_len = s->origin_resolution_current->ai_addrlen;
+        memcpy(&s->server.address, s->origin_resolution_current->ai_addr,
+               s->origin_resolution_current->ai_addrlen);
+    }
 
-//     return request_connect(key, d);
-// }
+    return request_connect(key, d);
+}
 
 static unsigned request_process(selector_key * event, struct request_st * state)
 {
@@ -197,30 +199,30 @@ static unsigned request_process(selector_key * event, struct request_st * state)
             break;
         }
         case socks_addr_type_domain:
-        // {
-        //     pthread_t thr;
-        //     selector_key *k = malloc(sizeof(*k));
-        //         if (k == NULL) {
-        //            ret = REQUEST_WRITE;
-        //            state->status = status_general_SOCKS_server_failure;
-        //            selector_set_interest_key(event, OP_WRITE);
-        //         } else {
-        //             memcpy(k, event, sizeof(*k));
-        //             if (-1 == pthread_create(&thr, 0, request_resolv_blocking, k)) {
-        //                 ret = REQUEST_WRITE;
-        //                 state->status = status_general_SOCKS_server_failure;
-        //                 selector_set_interest_key(event, OP_WRITE);
-        //                 ((Session *) (event->data))->register_info.status = state->status;
-        //             } else {
-        //                 ret = REQUEST_RESOLVE;
-        //                 // hasta que no resuelva el nombre, no hay que hacer nada
-        //                 selector_set_interest_key(event, OP_NOOP);
-        //                 memcpy(((Session *) (event->data))->register_info.dest_addr.fdqn,state->request.dest_addr.fdqn,sizeof(state->request.dest_addr.fdqn));
-        //                 ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
-        //             }
-        //         }
+        {
+            pthread_t thr;
+            selector_key *k = malloc(sizeof(*k));
+                if (k == NULL) {
+                   ret = REQUEST_WRITE;
+                   state->status = status_general_SOCKS_server_failure;
+                   selector_set_interest_key(event, OP_WRITE);
+                } else {
+                    memcpy(k, event, sizeof(*k));
+                    if (-1 == pthread_create(&thr, 0, request_resolv_blocking, k)) {
+                        ret = REQUEST_WRITE;
+                        state->status = status_general_SOCKS_server_failure;
+                        selector_set_interest_key(event, OP_WRITE);
+                        ((Session *) (event->data))->register_info.status = state->status;
+                    } else {
+                        ret = REQUEST_RESOLVE;
+                        // hasta que no resuelva el nombre, no hay que hacer nada
+                        selector_set_interest_key(event, OP_NOOP);
+                        memcpy(((Session *) (event->data))->register_info.dest_addr.fdqn,state->request.dest_addr.fdqn,sizeof(state->request.dest_addr.fdqn));
+                        ((Session *) (event->data))->register_info.dest_port = state->request.dest_port;
+                    }
+                }
                 break;
-        // }
+        }
         default:
         //{
             ret = REQUEST_WRITE;
@@ -356,12 +358,12 @@ static unsigned request_connect(selector_key *event, request_st *state)
             else {
                 st = selector_set_interest(event->s, *fd, OP_WRITE);
             }
-
             if (st != SELECTOR_SUCCESS)
             {
                 error = true;
                 goto finally;
             }
+            session->references+=1;
         }
         else
         {
@@ -407,16 +409,16 @@ static unsigned request_connecting(selector_key *event)
         {
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
-        // } else {
-        //     session->client_header.request.status = errno_to_socks(error);
+        } else {
+            session->client_header.request.status = errno_to_socks(error);
 
-        //     if(SELECTOR_SUCCESS != selector_set_interest_key(event, OP_NOOP)) {
-        //         return ERROR;
-        //     }
-        //     ((Session *) (event->data))->register_info.status = session->client_header.request.status;
-        //     log_access(&((Session *) (event->data))->socks_info);
+            if(SELECTOR_SUCCESS != selector_set_interest_key(event, OP_NOOP)) {
+                return ERROR;
+            }
+            ((Session *) (event->data))->register_info.status = session->client_header.request.status;
+            log_access(&((Session *) (event->data))->register_info);
 
-        //     return REQUEST_RESOLVE;
+            return REQUEST_RESOLVE;
         }
         if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
         {

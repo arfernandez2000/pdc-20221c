@@ -122,7 +122,7 @@ enum session_state{
     AUTH_WRITE,
     REQUEST_READ,
     REQUEST_CONNECTING,
-    // REQUEST_RESOLVE,
+    REQUEST_RESOLVE,
     REQUEST_WRITE,
     COPY,
     ERROR,
@@ -162,8 +162,8 @@ typedef struct Session {
     Connection client;
     Connection server;
 
-    // struct addrinfo *origin_resolution;
-    // struct addrinfo *origin_resolution_current;
+    struct addrinfo *origin_resolution;
+    struct addrinfo *origin_resolution_current;
 
     register_st register_info;
     pop3_sniff sniff;
@@ -171,7 +171,9 @@ typedef struct Session {
     union client_header client_header;
     union server_header server_header;
 
+    uint8_t raw_buff_a[MAX_BUFFER_POP3_SIZE], raw_buff_b[MAX_BUFFER_POP3_SIZE];
 
+    unsigned int references;
 
     time_t lastModified;
 } Session;

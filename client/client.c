@@ -47,15 +47,6 @@ void get_other_users(int fd, char **result, uint8_t *answer);
 
 static void (*option_func[CANT_OPTIONS])(int fd) = {transfered_bytes, connection_history, concurrent_connections, retrieve_users, create_user, create_admin, remove_user, modify_user, set_sniffer, quit};
 
-//historical_connections
-//concurrent_connections
-//get_users
-//set_user
-//remove_user
-//change_password
-//set_sniffer
-//quit
-
 
 static void sigterm_handler(const int signal) {
     if(signal == SIGPIPE)
@@ -470,22 +461,6 @@ void set_sniffer(int fd) {
             printf("\nServer failure\n\n");
             break;
         }
-
-    // printf("Quit success");
-
-
-
-
-    // resp_status status;
-    // n = get_setter_result(fd, &status);
-
-    // if(n <= 0) {
-    //     exit_error();
-    //     return;
-    // }
-
-    // print_response_status(status);
-
 }
 
 void user_answer_handler(int fd, uint8_t *answer) {
@@ -562,72 +537,3 @@ void get_answer_handler(int fd, uint8_t *answer, char **result) {
     }
     putchar('\n');
 }
-
-
-
-
-
-
-
-// 0-create_user 1-create_admin 2-delete_user 3-modify_user
-// void user_command(int fd, uint8_t command) {
-//     char name_buffer[CREDENTIALS_SIZE];
-//     char password_buffer[CREDENTIALS_SIZE];
-//     uint8_t cmd;
-
-//     switch (command) {
-//     case 0:
-//         printf("\n---- Create user ----\n");
-//         cmd = 0x01;
-//         break;
-//     case 1:
-//         printf("\n---- Create admin ----\n");
-//         cmd = 0x01;
-//         break;
-//     case 2:
-//         printf("\n---- Delete user ----\n");
-//         cmd = 0x02;
-//         break;
-//     case 3:
-//         printf("\n---- Modify user ----\n");
-//         cmd = 0x03;
-//         break;
-//     default:
-//         printf("\nUnknown error\n");
-//         exit(1);
-//         break;
-//     }
-//     printf("Username: ");
-//     scanf("%s",name_buffer);
-//     if (command != 2) {
-//         printf("Password: ");
-//         scanf("%s",password_buffer);
-//         char password_len = strlen(password_buffer);
-//     }
-//     printf("\n");
-
-//     int nbyte = 0;
-//     uint8_t *message = NULL;
-//     int name_len = strlen(name_buffer);
-//     int password_len = strlen(password_buffer);
-//     message = realloc(message, 3 + name_len + password_len);
-//     message[nbyte++] = 0x01;
-//     message[nbyte++] = cmd;
-
-//     if (command == 0 || command == 1) {
-//         message[nbyte++] = (command == 1)? 0x00 : 0x01;
-//     }
-
-//     message[nbyte++] = strlen(name_buffer);
-//     strcpy((char *)(message + nbyte++), name_buffer);
-
-//     if (command != 2) {
-//         message[(nbyte++) + name_len] = password_len;
-//         strcpy((char *)(message + (nbyte++) + name_len), password_buffer);
-//     }
-
-//     send(fd, message, strlen(message), MSG_NOSIGNAL);
-
-//     uint8_t answer[1];
-//     user_answer_handler(fd, answer);
-// }

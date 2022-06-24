@@ -292,7 +292,7 @@ selector_new(const size_t initial_elements) {
     if(ret != NULL) {
         memset(ret, 0x00, size);
         ret->master_t.tv_sec  = conf.select_timeout.tv_sec;
-        ret->master_t.tv_nsec = conf.select_timeout.tv_nsec;
+        //ret->master_t.tv_nsec = conf.select_timeout.tv_nsec;
         assert(ret->max_fd == 0);
         ret->resolution_jobs  = 0;
         pthread_mutex_init(&ret->resolution_mutex, 0);
@@ -304,23 +304,29 @@ selector_new(const size_t initial_elements) {
     return ret;
 }
 
-void
-selector_destroy(fd_selector s) {
+void selector_destroy(fd_selector s) {
     // lean ya que se llama desde los casos fallidos de _new.
-    if(s != NULL) {
-        if(s->fds != NULL) {
-            for(size_t i = 0; i < s->fd_size ; i++) {
-                if(ITEM_USED(s->fds + i)) {
+    if (s != NULL) {
+        if (s->fds != NULL) {
+            for (size_t i = 0; i < s->fd_size; i++) {
+                if (ITEM_USED(s->fds + i)) {
                     selector_unregister_fd(s, i);
                 }
             }
             pthread_mutex_destroy(&s->resolution_mutex);
-            for(struct blocking_job *j = s->resolution_jobs; j != NULL;
-                j = j->next) {
-                free(j);
+            struct blocking_job * j = s->resolution_jobs;
+            while(j!=NULL){
+                struct blocking_job * aux = j;
+                j = j->next;
+                free(aux);
             }
+            // for (struct blocking_job *j = s->resolution_jobs; j != NULL;) {
+            //     next = j->next;
+            //     free(j);
+            //     j = next;
+            // }
             free(s->fds);
-            s->fds     = NULL;
+            s->fds = NULL;
             s->fd_size = 0;
         }
         free(s);
@@ -484,9 +490,10 @@ handle_block_notifications(fd_selector s) {
         .s = s,
     };
     pthread_mutex_lock(&s->resolution_mutex);
-    for(struct blocking_job *j = s->resolution_jobs;
+    struct blocking_job *j, *next;
+    for(j = s->resolution_jobs;
         j != NULL ;
-        j  = j->next) {
+        j  = next) {
 
         struct item *item = s->fds + j->fd;
         if(ITEM_USED(item)) {
@@ -494,7 +501,7 @@ handle_block_notifications(fd_selector s) {
             s_key.data = item->data;
             item->handler->handle_block(&s_key);
         }
-
+        next = j->next;
         free(j);
     }
     s->resolution_jobs = 0;
