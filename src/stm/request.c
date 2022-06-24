@@ -397,7 +397,7 @@ static unsigned request_connecting(selector_key *event)
     int error;
     socklen_t len = sizeof(error);
     unsigned ret = REQUEST_CONNECTING;
-
+    struct request_st *d = &((Session *) (event->data))->client_header.request;
     struct Session *session = ((Session *) (event->data));
     int *fd = &session->server.fd;
     int ret_sock = getsockopt(*fd, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -410,15 +410,27 @@ static unsigned request_connecting(selector_key *event)
             session->client_header.request.status = status_succeeded;
             //set_historical_conections(get_historical_conections() +1);
         } else {
-            session->client_header.request.status = errno_to_socks(error);
+           if (session->origin_resolution_current != NULL) {
+                session->origin_resolution_current =
+                    session->origin_resolution_current->ai_next;
+                if (session->origin_resolution_current != NULL) {
+                    session->server.domain = session->origin_resolution_current->ai_family;
+                    session->server.address_len =
+                        session->origin_resolution_current->ai_addrlen;
+                    memcpy(&session->server.domain,
+                           session->origin_resolution_current->ai_addr,
+                           session->origin_resolution_current->ai_addrlen);
 
-            if(SELECTOR_SUCCESS != selector_set_interest_key(event, OP_NOOP)) {
-                return ERROR;
+                    return request_connect(event, d);
+                }
             }
-            ((Session *) (event->data))->register_info.status = session->client_header.request.status;
-            log_access(&((Session *) (event->data))->register_info);
-
-            return REQUEST_RESOLVE;
+            s->client.request.status = errno_to_socks(error);
+            if( SELECTOR_SUCCESS != selector_set_interest_key(key, OP_NOOP)) {
+                ret = ERROR;
+                s->client.request.status = status_general_SOCKS_server_failure;
+            }
+            ((Session * ) event->data)->register_info.status =
+                session->client_header.request.status;
         }
         if (-1 != request_marshal(session->client_header.request.write_buff, session->client_header.request.status, session->client_header.request.request.dest_addr_type, session->client_header.request.request.dest_addr, session->client_header.request.request.dest_port))
         {
